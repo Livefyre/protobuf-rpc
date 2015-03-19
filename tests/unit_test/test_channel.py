@@ -24,7 +24,7 @@ class TestErrorServer(TestService):
 class TestChannel(unittest.TestCase):
     def setUp(self,):
         self.hosts = [("127.0.0.1",12345)]
-        self.channel = ZMQChannel(hosts=self.hosts, pool_size=1, max_pool_size=1)
+        self.channel = ZMQChannel(hosts=self.hosts, max_pool_size=1)
         self.service = TestService_Stub(self.channel)
         self.controller = SocketRpcController()
 
@@ -32,7 +32,7 @@ class TestChannel(unittest.TestCase):
         self.server_thread = gevent.spawn(self.server.serve_forever)
 
         self.bad_hosts = [("127.0.0.1",12346)]
-        self.bad_channel = ZMQChannel(hosts=self.bad_hosts, pool_size=1, max_pool_size=1)
+        self.bad_channel = ZMQChannel(hosts=self.bad_hosts, max_pool_size=1)
         self.bad_service = TestService_Stub(self.bad_channel)
         self.bad_controller = SocketRpcController()
         self.bad_server = GServer("127.0.0.1", 12346, TestErrorServer(), poolsize=1)
