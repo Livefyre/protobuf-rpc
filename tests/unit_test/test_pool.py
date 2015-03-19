@@ -1,43 +1,57 @@
 import unittest
 from protobuf_rpc.pool import ObjectPool
 
+
 class MockClass(object):
-    def __init__(self, foo, bar):
-        self.foo = foo
-        self.bar = bar
+    pass
+
 
 class TestObjectPool(unittest.TestCase):
-    def setUp(self):
-        self.size = 5
-        self.maxsize = 10
-        self.pool = ObjectPool(MockClass,
-                          size=self.size,
-                          maxsize=self.maxsize,
-                          foo="foo",
-                          bar="bar")
+    def test_get(self):
+        pool = ObjectPool(MockClass, 1)
+        with pool.get() as conn:
+            assert isinstance(conn, MockClass)
+            last_obj = conn
 
+        # If we get again, it should re-use the same object
+        with pool.get() as obj:
+            assert last_obj == obj
+            raise pool.Remove()
 
-    def test_init_size(self):
-        self.assertEquals(self.pool.queue.qsize(),
-                          self.size)
-        self.assertEquals(self.pool.size,
-                          self.size)
+        # We removed in the last go, so it should give us a new one
+        # Mock the time function so we can test the timeout
+        pool.get_time = lambda: 0
+        with pool.get() as obj:
+            assert last_obj != obj
+            last_obj = obj
 
+        pool.get_time = lambda: 100
+        with pool.get() as obj:
+            assert last_obj != obj
 
-    def test_kwargs(self,):
-        with self.pool.get(block=False) as obj:
-            self.assertEquals(obj.foo, "foo")
-            self.assertEquals(obj.bar, "bar")
+    def test_rotation(self):
+        # The pool should rotate connections (not just re-use the same one)
+        used_conns = set()
+        pool_size = 5
+        pool = ObjectPool(MockClass, pool_size)
 
-    def test_args(self, ):
-        self.pool = ObjectPool(MockClass,
-                               self.size,
-                               self.maxsize,
-                               "foo",
-                               "bar")
-        with self.pool.get(block=False) as obj:
-            self.assertEquals(obj.foo, "foo")
-            self.assertEquals(obj.bar, "bar")
+        # Fill up the queue
+        _conns = [pool.take() for _ in range(pool_size)]
+        for conn in _conns:
+            pool.release(conn)
 
+        for _ in range(pool_size):
+            with pool.get() as conn:
+                assert conn not in used_conns
+                used_conns.add(conn)
 
-    
+        with pool.get() as conn:
+            assert conn in used_conns
+
+    def test_max_size(self):
+        pool_size = 5
+        pool = ObjectPool(MockClass, pool_size)
+        _conns = [pool.take() for _ in range(pool_size)]
+        self.assertRaises(pool.ConnectionError, pool.take)
+        pool.release(_conns[0])
+        assert pool.take()

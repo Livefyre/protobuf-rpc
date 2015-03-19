@@ -1,7 +1,8 @@
 from google.protobuf.service import RpcChannel
+from protobuf_rpc.error import ERROR_CODE_TO_ERROR_CLASS, NO_ERROR, ProtobufError
 from protobuf_rpc.protos.rpc_pb2 import Request, Response, BAD_REQUEST_PROTO
 from protobuf_rpc.util import serialize_string
-from protobuf_rpc.error import ERROR_CODE_TO_ERROR_CLASS, NO_ERROR,ProtobufError
+
 
 class ProtoBufRPCChannel(RpcChannel):
 
@@ -24,8 +25,6 @@ class ProtoBufRPCChannel(RpcChannel):
                                                     ProtobufError)
         error_message = getattr(resp_obj, "error_message", "RPC Error")
         raise error_class(error_message)
-
-
 
     def create_rpc_request(self, method, request):
         rpcRequest = Request()
