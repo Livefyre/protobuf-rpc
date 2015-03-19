@@ -1,8 +1,9 @@
-from protobuf_rpc.protos.rpc_pb2 import Request, Response, RPC_ERROR,\
-    INVALID_REQUEST_PROTO, METHOD_NOT_FOUND, BAD_REQUEST_PROTO
 from protobuf_rpc.controller import SocketRpcController
-from protobuf_rpc.util import serialize_string
 from protobuf_rpc.error import MethodNotFoundError
+from protobuf_rpc.protos.rpc_pb2 import Request, Response, RPC_ERROR, \
+    INVALID_REQUEST_PROTO, METHOD_NOT_FOUND, BAD_REQUEST_PROTO
+from protobuf_rpc.util import serialize_string
+
 
 class Callback(object):
     '''Class to allow execution of client-supplied callbacks.'''
@@ -26,7 +27,7 @@ class ProtoBufRPCServer(object):
         try:
             method = self.get_method(req_obj.method_name)
             if method is None:
-                raise MethodNotFoundError("Method %s not found"%(req_obj.method_name))
+                raise MethodNotFoundError("Method %s not found" % (req_obj.method_name))
         except Exception as e:
             return self.build_error_response(e.message, METHOD_NOT_FOUND)
 

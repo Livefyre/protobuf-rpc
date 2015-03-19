@@ -1,5 +1,10 @@
-import zmq.green as zmq
 import random
+
+import zmq.green as zmq
+
+
+class ZTimeout(IOError):
+    pass
 
 
 class ZMQConnection(object):
@@ -19,12 +24,11 @@ class ZMQConnection(object):
     def send(self, req):
         self.socket.send(req)
 
-    def recv(self, timeout=2*1000):
+    def recv(self, timeout=2 * 1000):
         if self.poller.poll(timeout):
             resp = self.socket.recv()
         else:
-            # TODO: remove host that just timedout
-            raise IOError("Timeout processing request.")
+            raise ZTimeout("Timeout processing request.")
         return resp
 
     def close(self,):

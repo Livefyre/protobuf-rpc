@@ -1,5 +1,6 @@
-from setuptools import setup, find_packages
 import os
+from setuptools import setup, find_packages
+
 
 base = os.path.dirname(__file__)
 local = lambda x: os.path.join(base, x)
@@ -10,7 +11,7 @@ def read(fname):
 
 setup(
     name="protobuf_rpc",
-    version="0.1.7",
+    version="0.2.0",
     author="Tim Cherry",
     author_email="timcherry21@gmail.com",
     description=("Gevent+ZMQ RPC Implementation for Google Protobufs."),
@@ -23,4 +24,3 @@ setup(
     test_suite='nose.collector',
     classifiers=[],
 )
-

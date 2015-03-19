@@ -1,6 +1,5 @@
-from Queue import Queue
 from contextlib import contextmanager
-
+import time
 
 
 class ObjectPool(object):
@@ -11,38 +10,47 @@ class ObjectPool(object):
     class Remove(Exception):
         pass
 
-    def __init__(self, obj, size=None, maxsize=None, *args, **kwargs):
-        self.queue = Queue(maxsize = maxsize)
+    class ConnectionError(Exception):
+        pass
+
+    def __init__(self, conn_factory, maxsize=None, maxage=60):
+        self.connections = []
         self.maxsize = maxsize
-        self.size = size
-        self.obj = obj
-        self.args = args
-        self.kwargs = kwargs
-        [self.queue.put(obj(*self.args, **self.kwargs)) for i in range(size)]
-        self.cursize = size
+        self.maxage = maxage
+        self.conn_factory = conn_factory
+        self.leased = set([])
 
     @contextmanager
     def get(self, block=True, timeout=None):
         try:
-            obj = self._get(block, timeout)
+            obj = self.take(block, timeout)
             yield obj
             self.release(obj)
         except self.Remove:
             self.remove(obj)
-        except Exception as e:
-            self.release(obj)
-            raise e
+
+    def get_time(self):
+        return time.time()
 
     def remove(self, obj):
-        self.release(self.obj(*self.args, **self.kwargs))
+        self.leased.remove(obj)
 
-    def _get(self, block, timeout):
-        if self.queue.empty() and self.cursize < self.maxsize:
-            self.cursize += 1
-            self.queue.put(self.obj(*self.args, **self.kwargs))
-        return self.queue.get(block=block, timeout=timeout)
+    def take(self, block=True, timeout=None):
+        try:
+            while True:
+                last_used, connection = self.connections.pop(0)
+                if self.get_time() - last_used <= self.maxage:
+                    break
+        except IndexError:
+            connection = self.make_connection()
+        self.leased.add(connection)
+        return connection
+
+    def make_connection(self):
+        if len(self.connections) + len(self.leased) >= self.maxsize:
+            raise self.ConnectionError("Too many connections")
+        return self.conn_factory()
 
     def release(self, obj):
-        assert isinstance(obj, self.obj)
-        self.queue.put(obj)
-
+        self.leased.remove(obj)
+        self.connections.append((self.get_time(), obj))
