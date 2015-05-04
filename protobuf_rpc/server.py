@@ -1,10 +1,11 @@
-from gevent import monkey
-monkey.patch_all()
+if True:
+    from gevent import monkey
+    monkey.patch_all()
 
-from gevent.pool import Pool
 from gevent.event import Event
-import zmq.green as zmq
+from gevent.pool import Pool
 from protobuf_rpc.base_server import ProtoBufRPCServer
+import zmq.green as zmq
 
 
 class GServer(ProtoBufRPCServer):
@@ -13,8 +14,9 @@ class GServer(ProtoBufRPCServer):
         self.stop_event = Event()
         context = zmq.Context()
         self.port = port
+        self.addr = "tcp://%s:%s" % (host, port)
         self.socket = context.socket(zmq.ROUTER)
-        self.socket.bind("tcp://%s:%s" % (host, port))
+        self.socket.bind(self.addr)
         self.service = service
 
     def serve_forever(self,):
@@ -24,10 +26,11 @@ class GServer(ProtoBufRPCServer):
             except zmq.ZMQError:
                 if self.socket.closed:
                     break
-                raise e
+                raise
             self.gpool.spawn(self.handle_request, msg)
 
     def shutdown(self,):
+        self.socket.unbind(self.addr)
         self.socket.close()
         self.stop_event.set()
 
@@ -37,4 +40,3 @@ class GServer(ProtoBufRPCServer):
         assert null == ''
         response = self.handle(request)
         self.socket.send_multipart([id_, null, response.SerializeToString()])
-
