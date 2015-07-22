@@ -22,9 +22,6 @@
     "chai": "*",
     "sinon": "^1.x"
   },
-  "scripts": {
-    "test": "node_modules/.bin/mocha --recursive rpc/nodejs/tests/ --timeout 5000 --reporter spec"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Livefyre/authz.git"
