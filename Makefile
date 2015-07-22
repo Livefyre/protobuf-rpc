@@ -12,7 +12,7 @@ JENKINS_NOSE_ARGS = --with-xunit
 
 all: env pb2_compile
 
-test:
+test: env
 	env/bin/nosetests $(NOSE_ARGS) tests/
  
 test-jenkins:

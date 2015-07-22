@@ -11,3 +11,6 @@ parts
 env/
 bin/
 .pydevproject
+node_modules
+bin
+nosetests.xml
