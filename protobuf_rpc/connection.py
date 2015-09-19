@@ -95,6 +95,9 @@ class ZMQConnectionPool(object):
 
     @contextlib.contextmanager
     def connection(self, **kwargs):
+        """
+        :yield: ZMQConnection
+        """
         conn = None
         try:
             conn = self.get(**kwargs)

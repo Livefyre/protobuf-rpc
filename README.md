@@ -64,6 +64,13 @@ Environment: EC2, c1.medium instance, ubuntu-precise image:
 
 See: `protobuf-rpc/tests/load_test/hammer.py`
 
+
+```sh
+make load-server-rpc &
+sleep 1
+make hammer
+```
+
 HTTP:
 
 	Total Elapsed time (sec): 24.0618028641
