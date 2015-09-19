@@ -1,6 +1,6 @@
 from google.protobuf.service import RpcChannel
 from protobuf_rpc.error import ERROR_CODE_TO_ERROR_CLASS, NO_ERROR, ProtobufError
-from protobuf_rpc.protos.rpc_pb2 import Request, Response, BAD_REQUEST_PROTO
+from protobuf_rpc.protos.rpc_pb2 import Request, Response
 from protobuf_rpc.util import deserialize_string
 
 
@@ -11,12 +11,12 @@ class ProtoBufRPCChannel(RpcChannel):
         response = self.send_rpc_request(rpc_request)
         resp_obj = deserialize_string(response, Response)
         self.check_for_errors(resp_obj)
-        serialized_resp_obj = deserialize_string(resp_obj.response_proto,
-                                                     response_class)
+        deserialized_resp_obj = deserialize_string(resp_obj.response_proto,
+                                                 response_class)
         if done_callback:
-            done_callback(serialized_resp_obj)
+            done_callback(deserialized_resp_obj)
         else:
-            return serialized_resp_obj
+            return deserialized_resp_obj
 
     def check_for_errors(self, resp_obj):
         if resp_obj.error_code == NO_ERROR:
@@ -32,6 +32,3 @@ class ProtoBufRPCChannel(RpcChannel):
         rpcRequest.service_name = method.containing_service.full_name
         rpcRequest.method_name = method.name
         return rpcRequest
-
-
-
