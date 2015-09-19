@@ -70,17 +70,18 @@ class ZMQConnectionPool(object):
     def get(self, block=True, timeout=None):
         pool = self.pool
         if self.size >= self.maxsize or pool.qsize():
+            # we're over limit or there are already created objects in the queue
             try:
                 conn = pool.get(block=block, timeout=timeout)
             except Empty:
                 raise ConnectionError("Too many connections")
             # we got a connection, but it must be valid!
-            if conn:
-                if not conn.closed:
-                    return conn
+            # a null connection means we need to create a new one
+            if conn and not conn.closed:
+                return conn
             # we didn't get a valid connection, add one.
         else:
-            # we have to room to grow!
+            # we have to room to grow, so reserve a spot!
             self.size += 1
         try:
             conn = self.create_connection()
