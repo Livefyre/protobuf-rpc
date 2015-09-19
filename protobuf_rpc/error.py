@@ -1,5 +1,6 @@
 from protobuf_rpc.protos.rpc_pb2 import *
 
+
 class ProtobufError(Exception):
     '''Base exception class for RPC protocol buffer errors.'''
 
@@ -90,10 +91,10 @@ class IOError(ProtobufError):
 
 
 ERROR_CODE_TO_ERROR_CLASS = {
-    BAD_REQUEST_DATA : BadRequestDataError,
-    BAD_REQUEST_PROTO : BadRequestProtoError,
-    SERVICE_NOT_FOUND : ServiceNotFoundError,
-    METHOD_NOT_FOUND : MethodNotFoundError,
+    BAD_REQUEST_DATA: BadRequestDataError,
+    BAD_REQUEST_PROTO: BadRequestProtoError,
+    SERVICE_NOT_FOUND: ServiceNotFoundError,
+    METHOD_NOT_FOUND: MethodNotFoundError,
     RPC_ERROR: RpcError,
     INVALID_REQUEST_PROTO: InvalidRequestProtoError,
     BAD_RESPONSE_PROTO: BadResponseProtoError,

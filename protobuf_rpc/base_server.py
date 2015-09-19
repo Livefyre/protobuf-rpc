@@ -2,7 +2,7 @@ from protobuf_rpc.controller import SocketRpcController
 from protobuf_rpc.error import MethodNotFoundError
 from protobuf_rpc.protos.rpc_pb2 import Request, Response, RPC_ERROR, \
     INVALID_REQUEST_PROTO, METHOD_NOT_FOUND, BAD_REQUEST_PROTO
-from protobuf_rpc.util import serialize_string
+from protobuf_rpc.util import deserialize_string
 
 
 class Callback(object):
@@ -54,7 +54,7 @@ class ProtoBufRPCServer(object):
         return self.service.DESCRIPTOR.FindMethodByName(method_name)
 
     def parse_inner_request(self, request, method):
-        return serialize_string(request.request_proto,
+        return deserialize_string(request.request_proto,
                                 self.service.GetRequestClass(method))
 
 
