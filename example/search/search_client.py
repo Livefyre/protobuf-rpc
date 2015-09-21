@@ -8,8 +8,8 @@ from protobuf_rpc.channel import ZMQChannel
 from protobuf_rpc.controller import SocketRpcController
 import time
 
-def callback(response):
-    print "Server response", response.response
+def callback(thread_id, response):
+    print thread_id, "Server response", response.response
 
 channel = ZMQChannel(hosts=[("127.0.0.1", 1234),
                             ("127.0.0.1", 12345),
@@ -23,7 +23,7 @@ def send_requests(thread_id):
     request = SearchRequest()
     request.query = "tim"
     print 'Thread %s, Sending Request 1'%(thread_id)
-    service.Search(controller, request, callback=callback)
+    service.Search(controller, request, callback=lambda r: callback(thread_id, r))
 
 
 
@@ -49,7 +49,7 @@ def run():
     greens = []
     for x in range(1, 100):
         greens.append(gevent.spawn(send_requests, x))
-        time.sleep(1)
+        #time.sleep(1)
     gevent.joinall(greens)
 
 

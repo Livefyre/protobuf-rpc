@@ -4,8 +4,15 @@ monkey.patch_all()
 import zmq.green as zmq
 from protobuf_rpc.connection import ZMQConnection
 import unittest
+import os
 
-@unittest.skip('no work on circleci')
+
+def skip_in_cirleci(func):
+    if os.uname()[0] == 'Darwin':
+        return func
+    return unittest.skip('no work on circleci')(func)
+
+@skip_in_cirleci
 class TestConnection(unittest.TestCase):
 
     def setUp(self,):
