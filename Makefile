@@ -9,6 +9,7 @@ ENV = env
 PIP = $(PWD)/env/bin/pip
 PYTHON = exec $(PWD)/env/bin/python
 JENKINS_NOSE_ARGS = --with-xunit
+DISTRIBUTE = sdist bdist_wheel
 
 all: env pb2_compile
 
@@ -24,8 +25,11 @@ clean:
 	find protobuf_rpc/ -type f -name "*.pyc" -exec rm {} \;
 
 package: all
-	$(PYTHON) setup.py bdist_egg
-	$(PYTHON) setup.py sdist
+	$(PYTHON) setup.py $(DISTRIBUTE)
+
+release: env
+	$(PYTHON) setup.py register -r livefyre
+	$(PYTHON) setup.py $(DISTRIBUTE) upload -r livefyre
 
 test-client: env
 	$(PYTHON) example/search/search_client.py
@@ -48,3 +52,5 @@ env/bin/activate: requirements.txt
 	ln -fs env/bin .
 	. env/bin/activate; pip install -r requirements.txt
 	touch env/bin/activate
+
+

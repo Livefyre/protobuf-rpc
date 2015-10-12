@@ -8,10 +8,11 @@ import zmq.green as zmq
 
 class ZMQConnection(object):
 
-    def __init__(self, hosts, maxidle=None, timeout=2 * 1000):
-        self._last_used = time.time()
+    def __init__(self, hosts, maxidle=None, timeout=2 * 1000, maxage=60):
+        self._last_used = self._born = time.time()
         self._closed = False
         self.maxidle = maxidle
+        self.maxage = maxage
         self.timeout = timeout
         self._zmq_init(hosts)
 
@@ -49,7 +50,13 @@ class ZMQConnection(object):
     def closed(self):
         if self._closed:
             return self._closed
-        if self.maxidle and time.time() - self._last_used > self.maxidle:
+        t = time.time()
+        died_of_old_age = self.maxage and t - self._born > self.maxage
+        died_of_boredom = self.maxidle and t - self._last_used > self.maxidle
+        if died_of_old_age:
+            self.close()
+            return True
+        if died_of_boredom:
             self.close()
             return True
         return False
