@@ -55,8 +55,7 @@ class ProtoBufRPCServer(object):
 
     def parse_inner_request(self, request, method):
         return deserialize_string(request.request_proto,
-                                self.service.GetRequestClass(method))
-
+                                  self.service.GetRequestClass(method))
 
     def do_request(self, method, proto_request):
         controller = SocketRpcController()
