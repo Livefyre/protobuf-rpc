@@ -12,7 +12,7 @@ class ProtoBufRPCChannel(RpcChannel):
         resp_obj = deserialize_string(response, Response)
         self.check_for_errors(resp_obj)
         deserialized_resp_obj = deserialize_string(resp_obj.response_proto,
-                                                 response_class)
+                                                   response_class)
         if done_callback:
             done_callback(deserialized_resp_obj)
         else:
