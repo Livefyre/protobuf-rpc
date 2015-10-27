@@ -31,7 +31,7 @@ class ThreadedGServer(ProtoBufRPCServer):
             threads.append(thread)
 
         try:
-            while True:
+            while not self.stop_event.is_set():
                 self.stop_event.wait(1)
         except KeyboardInterrupt:
             self.stop_event.set()
