@@ -8,12 +8,13 @@ from zmq.devices.monitoredqueuedevice import ThreadMonitoredQueue
 class ThreadedGServer(ProtoBufRPCServer):
     WORKER_URL = "inproc://worker"
 
-    def __init__(self, host, port, service, poolsize=10):
+    def __init__(self, host, port, service, poolsize=10, worker_socket=zmq.REP):
         self.host = host
         self.port = port
         self.num_workers = poolsize
         self.stop_event = threading.Event()
         self.service = service
+        self.worker_socket = worker_socket
 
     def serve_forever(self):
         dev = ThreadMonitoredQueue(zmq.ROUTER, zmq.DEALER, zmq.PUB, 'in', 'out')
@@ -39,7 +40,7 @@ class ThreadedGServer(ProtoBufRPCServer):
             thread.join()
 
     def worker(self, stop_event):
-        socket = zmq.Context.instance().socket(zmq.ROUTER)
+        socket = zmq.Context.instance().socket(self.worker_socket)
         socket.connect(self.WORKER_URL)
         poller = zmq.Poller()
         poller.register(socket, zmq.POLLIN)
