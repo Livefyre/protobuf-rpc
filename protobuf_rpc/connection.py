@@ -1,9 +1,19 @@
 from Queue import Queue, Empty
 import contextlib
+from logging import getLogger
 import random
 import time
+from gevent.monkey import saved
 
-import zmq.green as zmq
+
+LOG = getLogger(__name__)
+
+
+if bool(saved):
+    LOG.info('using zmq.green...')
+    import zmq.green as zmq
+else:
+    import zmq
 
 
 class ZMQConnection(object):
