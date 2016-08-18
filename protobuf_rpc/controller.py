@@ -1,4 +1,5 @@
 from google.protobuf.service import RpcController
+from contextlib import contextmanager
 
 
 class SocketRpcController(RpcController):
@@ -13,7 +14,7 @@ class SocketRpcController(RpcController):
         self._error = None
         self.reason = None
 
-    def handleError(self, error_code, message):
+    def handleError(self, exc_info):
         '''Log and set the controller state.'''
         self._fail = True
         self.reason = error_code
@@ -31,3 +32,7 @@ class SocketRpcController(RpcController):
 
     def error(self):
         return self._error
+
+    @contextmanager
+    def request(self):
+        pass

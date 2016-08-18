@@ -37,6 +37,8 @@ message Request {
   
   // RPC request proto
   required bytes request_proto = 3;
+  
+  repeated uint32 allowed_error_codes = 4;
 }
 
 message Response {

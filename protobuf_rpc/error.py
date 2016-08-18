@@ -90,6 +90,12 @@ class IOError(ProtobufError):
         super(IOError, self).__init__(message, IO_ERROR)
 
 
+class ApplicationError(Exception):
+    def __init__(self, message, code=500):
+        super(ApplicationError, self).__init__(message)
+        self.code = code
+
+
 ERROR_CODE_TO_ERROR_CLASS = {
     BAD_REQUEST_DATA: BadRequestDataError,
     BAD_REQUEST_PROTO: BadRequestProtoError,

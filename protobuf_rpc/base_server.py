@@ -22,7 +22,7 @@ class ProtoBufRPCServer(object):
         try:
             req_obj = self.parse_outer_request(request)
         except Exception as e:
-            return self.build_error_response(e.message, INVALID_REQUEST_PROTO)
+            return self.build_error_response(sys.exc_info(), INVALID_REQUEST_PROTO)
 
         try:
             method = self.get_method(req_obj.method_name)
@@ -40,6 +40,10 @@ class ProtoBufRPCServer(object):
             response = self.do_request(method, req_proto)
         except NotImplementedError as e:
             return self.build_error_response(e.message, METHOD_NOT_FOUND)
+        except ApplicationError as e:
+            response = self.build_error_response(e.message, RPC_ERROR)
+            response.application_error_code = e.code
+            return response
         except Exception as e:
             return self.build_error_response(e.message, RPC_ERROR)
 
