@@ -26,11 +26,3 @@ class ProtoBufRPCChannel(RpcChannel):
         if resp_obj.application_error_code:
             args.append(resp_obj.application_error_code)
         raise error_class(*args)
-
-    def create_rpc_request(self, method, request):
-        rpcRequest = Request()
-        rpcRequest.request_proto = request.SerializeToString()
-        rpcRequest.service_name = method.containing_service.full_name
-        rpcRequest.method_name = method.name
-        rpcRequest.allowed_error_codes.extend(ErrorReason.values())
-        return rpcRequest

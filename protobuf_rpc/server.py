@@ -34,5 +34,6 @@ class GServer(ProtoBufRPCServer):
         assert len(msg) == 3
         (id_, null, request) = msg
         assert null == ''
+        import pdb; pdb.set_trace()
         response = self.handle(request)
         self.socket.send_multipart([id_, null, response.SerializeToString()])

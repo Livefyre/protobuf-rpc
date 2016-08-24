@@ -13,7 +13,7 @@ class ProtobufRPCClient(object):
     def _execute(self, method_descr):
         def inner(payload, allowed_error_codes=None):
             request = method_descr.input_type._concrete_class(payload=payload)
-            rpc_request = self.channel.create_rpc_request(method_descr, request)
+            rpc_request = self.create_rpc_request(method_descr, request)
             rpc_request.allowed_error_codes.extend(allowed_error_codes)
             try:
                 return getattr(self.service, method_descr.name)(self.controller, request).payload
@@ -25,3 +25,11 @@ class ProtobufRPCClient(object):
 
     def __getattr__(self, key):
         raise OperationNotSupported(key)
+
+    def create_rpc_request(self, method, request):
+        rpcRequest = Request()
+        rpcRequest.request_proto = request.SerializeToString()
+        rpcRequest.service_name = method.containing_service.full_name
+        rpcRequest.method_name = method.name
+        rpcRequest.allowed_error_codes.extend(ErrorReason.values())
+        return rpcRequest

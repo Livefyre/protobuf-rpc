@@ -4,15 +4,16 @@ import unittest
 
 import gevent
 from protobuf_rpc.channel import ZMQChannel
+from protobuf_rpc.client import ProtobufRPCClient
 from protobuf_rpc.controller import SocketRpcController
 from protobuf_rpc.error import *
 from protobuf_rpc.server import GServer
+from protobuf_rpc.protos.rpc_pb2 import Request as RequestWrapper
 
 from TestService_pb2 import Request, Response, TestService_Stub, TestService
 
 
 class TestServer(TestService):
-
     def Query(self, controller, request, done):
         assert request.query == "PING"
         response = Response()
@@ -26,13 +27,15 @@ class TestErrorServer(TestService):
         assert False
 
 
-class TestChannel(unittest.TestCase):
+class TestClient(unittest.TestCase):
 
     def setUp(self):
         self.hosts = [("127.0.0.1", 12345)]
         self.channel = ZMQChannel(hosts=self.hosts, max_pool_size=1)
         self.service = TestService_Stub(self.channel)
         self.controller = SocketRpcController()
+
+        self.client = ProtobufRPCClient(self.channel, self.service)
 
         self.server = GServer("127.0.0.1", 12345, TestServer(), poolsize=1)
         self.server_thread = gevent.spawn(self.server.serve_forever)
@@ -53,8 +56,7 @@ class TestChannel(unittest.TestCase):
     def test_send_rpc(self):
         req = Request()
         req.query = "PING"
-        resp = self.service.Query(self.controller,
-                                  req)
+        resp = self.client.Query(req)
         self.assertEquals(resp.response, "PONG")
 
     def test_not_implemented(self):
