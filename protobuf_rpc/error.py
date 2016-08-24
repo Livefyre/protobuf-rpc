@@ -49,7 +49,8 @@ class MethodNotFoundError(ProtobufError):
 class RpcError(ProtobufError):
     '''Exception generated for an RpcError.'''
 
-    def __init__(self, message):
+    def __init__(self, message, application_error_code):
+        self.application_error_code = application_error_code
         super(RpcError, self).__init__(message, RPC_ERROR)
 
 
@@ -88,12 +89,6 @@ class IOError(ProtobufError):
 
     def __init__(self, message):
         super(IOError, self).__init__(message, IO_ERROR)
-
-
-class ApplicationError(Exception):
-    def __init__(self, message, code=500):
-        super(ApplicationError, self).__init__(message)
-        self.code = code
 
 
 ERROR_CODE_TO_ERROR_CLASS = {

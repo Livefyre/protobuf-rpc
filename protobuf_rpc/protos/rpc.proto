@@ -46,14 +46,16 @@ message Response {
   // RPC response proto
   optional bytes response_proto = 1;
   
-  // Error, if any
-  optional string error_message = 2;
-  
   // Was callback invoked
-  optional bool callback = 3 [default = false];
+  optional bool callback = 2 [default = false];
   
   // Error Reason
-  optional ErrorReason error_code = 4 [default = NO_ERROR];
+  optional ErrorReason error_code = 3 [default = NO_ERROR];
+
+  optional uint32 application_error_code = 4;
+
+  optional string error_message = 5;
+
 }
 
 // Possible error reasons

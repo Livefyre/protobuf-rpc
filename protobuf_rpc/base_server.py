@@ -1,5 +1,7 @@
+import sys
+
 from protobuf_rpc.controller import SocketRpcController
-from protobuf_rpc.error import MethodNotFoundError
+from protobuf_rpc.error import MethodNotFoundError, RpcError
 from protobuf_rpc.protos.rpc_pb2 import Request, Response, RPC_ERROR, \
     INVALID_REQUEST_PROTO, METHOD_NOT_FOUND, BAD_REQUEST_PROTO
 from protobuf_rpc.util import deserialize_string
@@ -22,30 +24,26 @@ class ProtoBufRPCServer(object):
         try:
             req_obj = self.parse_outer_request(request)
         except Exception as e:
-            return self.build_error_response(sys.exc_info(), INVALID_REQUEST_PROTO)
+            return self.handle_error(request, sys.exc_info(), INVALID_REQUEST_PROTO)
 
         try:
             method = self.get_method(req_obj.method_name)
             if method is None:
                 raise MethodNotFoundError("Method %s not found" % (req_obj.method_name))
         except Exception as e:
-            return self.build_error_response(e.message, METHOD_NOT_FOUND)
+            return self.handle_error(request, sys.exc_info(), METHOD_NOT_FOUND)
 
         try:
             req_proto = self.parse_inner_request(req_obj, method)
         except Exception as e:
-            return self.build_error_response(e.message, BAD_REQUEST_PROTO)
+            return self.handle_error(request, sys.exc_info(), BAD_REQUEST_PROTO)
 
         try:
             response = self.do_request(method, req_proto)
         except NotImplementedError as e:
-            return self.build_error_response(e.message, METHOD_NOT_FOUND)
-        except ApplicationError as e:
-            response = self.build_error_response(e.message, RPC_ERROR)
-            response.application_error_code = e.code
-            return response
+            return self.handle_error(request, sys.exc_info(), METHOD_NOT_FOUND)
         except Exception as e:
-            return self.build_error_response(e.message, RPC_ERROR)
+            return self.handle_error(request, sys.exc_info(), RPC_ERROR)
 
         return response
 
@@ -69,9 +67,18 @@ class ProtoBufRPCServer(object):
         response.response_proto = callback.response.SerializeToString()
         return response
 
-    def build_error_response(self, error_message, error_code=RPC_ERROR):
+    def handle_error(self, request, exc_info, error_code):
+        resp = self.build_error_response(request, exc_info, error_code)
+        if isinstance(exc_info[1], RpcError) and exc_info[1].application_error_code in request.allowed_error_codes:
+            return resp
+        self.log_error(request, exc_info, error_code)
+        return resp
+
+    def log_error(self, request, exc_info, error_code):
+        pass
+
+    def build_error_response(self, request, exc_info, error_code=RPC_ERROR):
         response = Response()
         response.error_code = error_code
-        error_message = str(error_message)
-        response.error_message = error_message
+        response.error_message = str(exc_info[1])
         return response
