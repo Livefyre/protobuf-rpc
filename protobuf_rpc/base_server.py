@@ -19,6 +19,7 @@ class Callback(object):
 
 class ProtoBufRPCServer(object):
     def handle(self, request):
+        import time; time.sleep(3)
         try:
             req_obj = self.parse_outer_request(request)
         except Exception as e:
@@ -43,6 +44,7 @@ class ProtoBufRPCServer(object):
         except Exception as e:
             return self.build_error_response(e.message, RPC_ERROR)
 
+        response.request_id = req_obj.id
         return response
 
     def parse_outer_request(self, request):

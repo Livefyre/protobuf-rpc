@@ -11,9 +11,7 @@ import time
 def callback(thread_id, response):
     print thread_id, "Server response", response.response
 
-channel = ZMQChannel(hosts=[("127.0.0.1", 1234),
-                            ("127.0.0.1", 12345),
-                            ("127.0.0.1", 123456)])
+channel = ZMQChannel(hosts=[("127.0.0.1", 1234)])
 
 service = SearchService_Stub(channel)
 controller = SocketRpcController()

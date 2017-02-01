@@ -31,8 +31,9 @@ class GServer(ProtoBufRPCServer):
         self.stop_event.set()
 
     def handle_request(self, msg):
-        assert len(msg) == 3
-        (id_, null, request) = msg
-        assert null == ''
-        response = self.handle(request)
-        self.socket.send_multipart([id_, null, response.SerializeToString()])
+        # import pdb; pdb.set_trace()
+        # assert len(msg) == 3
+        # (id_, null, request) = msg
+        # assert null == ''
+        response = self.handle(msg[-1])
+        self.socket.send_multipart(msg[:-1] + [response.SerializeToString()])

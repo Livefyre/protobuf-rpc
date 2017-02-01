@@ -1,0 +1,147 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.livefyre</groupId>
+        <artifactId>parent</artifactId>
+        <version>0.0.5</version>
+        <relativePath />
+    </parent>
+
+    <artifactId>protobuf-rpc</artifactId>
+    <name>protobuf-rpc</name>
+    <!-- Release new maven version via jenkins, ask: @jov or @matt -->
+    <version>0.0.1-SNAPSHOT</version>
+    <url>https://github.com/Livefyre/protobuf-rpc</url>
+
+    <scm>
+        <connection>scm:git:git@github.com:Livefyre/protobuf-rpc.git</connection>
+        <developerConnection>scm:git:git@github.com:Livefyre/protobuf-rpc.git</developerConnection>
+        <url>git@github.com:Livefyre/protobuf-rpc.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+
+        <!-- protobuf paths -->
+        <protobuf.input.directory>${project.basedir}/src/main/resources</protobuf.input.directory>
+        <protobuf.output.directory>${project.build.directory}/generated-sources</protobuf.output.directory>
+
+        <!-- library versions -->
+        <build-helper-maven-plugin.version>1.9.1</build-helper-maven-plugin.version>
+        <maven-antrun-plugin.version>1.8</maven-antrun-plugin.version>
+        <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
+        <maven-resources-plugin.version>3.0.2</maven-resources-plugin.version>
+        <maven-shade-plugin.version>2.4.2</maven-shade-plugin.version>
+        <os-maven-plugin.version>1.4.1.Final</os-maven-plugin.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <jeromq.version>0.3.6</jeromq.version>
+
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${protobuf.version}</version>
+        </dependency>
+        <!-- pure java implementation of zeromq -->
+        <dependency>
+            <groupId>org.zeromq</groupId>
+            <artifactId>jeromq</artifactId>
+            <version>${jeromq.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- copy protos into java project -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven-resources-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/../protos</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- compile proto buffer files using copied protoc binary -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>${maven-antrun-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>exec-protoc</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <target>
+                                <!--<property name="protoc.filename" value="protoc-${protobuf.version}-${os.detected.classifier}.exe"/>-->
+                                <!--<property name="protoc.filepath" value="${project.build.directory}/${protoc.filename}"/>-->
+                                <!--<chmod file="${protoc.filepath}" perm="ugo+rx"/>-->
+                                <mkdir dir="${protobuf.output.directory}" />
+                                <path id="protobuf.input.filepaths.path">
+                                    <fileset dir="${protobuf.input.directory}">
+                                        <include name="**/*.proto"/>
+                                    </fileset>
+                                </path>
+                                <pathconvert pathsep=" " property="protobuf.input.filepaths" refid="protobuf.input.filepaths.path"/>
+                                <exec executable="protoc" failonerror="true">
+                                    <arg value="-I"/>
+                                    <arg value="${protobuf.input.directory}"/>
+                                    <arg value="--java_out"/>
+                                    <arg value="${protobuf.output.directory}"/>
+                                    <arg line="${protobuf.input.filepaths}"/>
+                                </exec>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- add generated proto buffer classes into the package -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>${build-helper-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>add-classes</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${protobuf.output.directory}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
