@@ -7,3 +7,4 @@ Flask==0.10.1
 GreenletProfiler>=0.1
 gevent>=1.0
 wheel
+-e .

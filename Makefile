@@ -7,17 +7,17 @@ export PYTHONPATH=$PYTHONPATH:./
 PWD=`pwd`
 ENV = env
 PIP = $(PWD)/env/bin/pip
-PYTHON = exec $(PWD)/env/bin/python
+PYTHON = . env/bin/activate; cd python; python
 JENKINS_NOSE_ARGS = --with-xunit
 DISTRIBUTE = sdist bdist_wheel
 
 all: env pb2_compile
 
 test: env pb2_compile
-	env/bin/nosetests $(NOSE_ARGS) tests/
+	env/bin/nosetests $(NOSE_ARGS) python/tests/
 
 test-jenkins:
-	env/bin/nosetests tests/ $(JENKINS_NOSE_ARGS)
+	env/bin/nosetests python/tests/ $(JENKINS_NOSE_ARGS)
 
 clean:
 	rm -rf build/
@@ -47,10 +47,9 @@ load-server-http: env
 	$(PYTHON) tests/load_test/http.py
 
 env: env/bin/activate
-env/bin/activate: requirements.txt
+env/bin/activate: python/requirements.txt
 	test -d env || virtualenv --no-site-packages env
-	ln -fs env/bin .
-	. env/bin/activate; pip install -r requirements.txt
+	. env/bin/activate; pip install -r python/requirements.txt
 	touch env/bin/activate
 
 

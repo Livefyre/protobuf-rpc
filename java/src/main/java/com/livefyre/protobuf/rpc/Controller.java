@@ -1,28 +1,25 @@
 // https://github.com/orbekk/protobuf-simple-rpc/blob/master/src/main/java/com/orbekk/protobuf/Rpc.java
 package com.livefyre.protobuf.rpc;
 
+import com.google.protobuf.RpcCallback;
+import com.google.protobuf.RpcController;
+import com.googlecode.protobuf.socketrpc.SocketRpcProtos;
+import com.googlecode.protobuf.socketrpc.SocketRpcProtos.Response;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Message;
-import com.google.protobuf.RpcCallback;
-import com.google.protobuf.RpcController;
-import com.googlecode.protobuf.socketrpc.SocketRpcProtos.Response;
 
 public class Controller implements RpcController {
-    private CountDownLatch done = new CountDownLatch(1);
     private volatile String errorMessage = "";
     private volatile boolean hasFailed;
     private volatile boolean canceled;
     private volatile long timeoutMillis = 0;
     private volatile List<RpcCallback<Object>> cancelNotificationListeners = null;
-    private volatile Message responseProto;
+    private volatile Channel.Errors channelError = null;
+    private volatile SocketRpcProtos.ErrorReason rpcError = null;
 
-    public Controller() {
-    }
+    public Controller() {}
 
     public Controller(Controller other) {
         copyFrom(other);
@@ -49,14 +46,7 @@ public class Controller implements RpcController {
         hasFailed = response.getHasFailed();
         canceled = response.getCanceled();
         errorMessage = response.getErrorMessage();
-    }
-
-    public void setResponseProto(Message responseProto) {
-        this.responseProto = responseProto;
-    }
-
-    public Message getResponseProto() {
-        return responseProto;
+        rpcError = response.getErrorCode();
     }
 
     @Override
@@ -64,26 +54,16 @@ public class Controller implements RpcController {
         return errorMessage;
     }
 
-    public boolean isDone() {
-        return done.getCount() == 0;
-    }
+    public Channel.Errors channelError() { return channelError; }
 
-    public void await() throws InterruptedException {
-        done.await();
-    }
-
-    public void complete() {
-        done.countDown();
-    }
+    public SocketRpcProtos.ErrorReason rpcError() { return rpcError; }
 
     public boolean isOk() {
         return !hasFailed && !canceled;
     }
 
     @Override
-    public boolean failed() {
-        return hasFailed;
-    }
+    public boolean failed() { return hasFailed; }
 
     @Override
     public boolean isCanceled() {
@@ -111,6 +91,11 @@ public class Controller implements RpcController {
         errorMessage = message;
     }
 
+    public void setFailed(Channel.Errors channelError) {
+        this.channelError = channelError;
+        hasFailed = true;
+    }
+
     public void cancel() {
         canceled = true;
         if (cancelNotificationListeners != null) {
@@ -125,17 +110,12 @@ public class Controller implements RpcController {
         return timeoutMillis;
     }
 
-    /** Set the timeout in number of milliseconds.
-     *
-     * The default timeout is 0, i.e. never time out.
-     */
     public void setTimeout(long milliseconds) {
         timeoutMillis = milliseconds;
     }
 
     @Override
-    public void startCancel() {
-    }
+    public void startCancel() {}
 
     @Override public String toString() {
         return String.format("Controller[ok(%s) canceled(%s) failed(%s) error_text(%s)]",

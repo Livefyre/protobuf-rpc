@@ -19,7 +19,6 @@ class Callback(object):
 
 class ProtoBufRPCServer(object):
     def handle(self, request):
-        import time; time.sleep(3)
         try:
             req_obj = self.parse_outer_request(request)
         except Exception as e:
