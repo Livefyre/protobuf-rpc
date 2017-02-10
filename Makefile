@@ -50,6 +50,7 @@ env: env/bin/activate
 env/bin/activate: python/requirements.txt
 	test -d env || virtualenv --no-site-packages env
 	. env/bin/activate; pip install -r python/requirements.txt
+	. env/bin/activate; pip install -e python/
 	touch env/bin/activate
 
 

@@ -4,7 +4,7 @@ downloads
 eggs
 parts
 *.swp
-*_pb2.py
+python/protobuf_rpc/protos/*_pb2.py
 .project
 .idea
 *.iml
