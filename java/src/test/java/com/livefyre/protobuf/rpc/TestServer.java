@@ -1,6 +1,5 @@
 package com.livefyre.protobuf.rpc;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
