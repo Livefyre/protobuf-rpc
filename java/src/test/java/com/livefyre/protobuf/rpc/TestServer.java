@@ -57,24 +57,22 @@ public class TestServer {
     public void tearDown() {
         server.tearDown();
         socket.close();
-        context.destroy();
     }
 
     @Test(expected = Exceptions.InvalidRequestProtoException.class)
     public void testInvalidRequestProto() throws Exceptions.ProtoRpcException, InvalidProtocolBufferException {
-        ZMQ.Socket socket = context.createSocket(ZMQ.REQ);
+        socket = context.createSocket(ZMQ.REQ);
         socket.connect("tcp://localhost:1234");
         socket.send("foo");
         Controller controller = new Controller();
         SocketRpcProtos.Response response = SocketRpcProtos.Response.parseFrom(socket.recv());
         controller.readFrom(response);
-        socket.close();
         throw Exceptions.getFrom(controller);
     }
 
     @Test(expected = Exceptions.MethodNotFoundError.class)
     public void testMethodNotFoundError() throws InvalidProtocolBufferException, Exceptions.ProtoRpcException {
-        ZMQ.Socket socket = context.createSocket(ZMQ.REQ);
+        socket = context.createSocket(ZMQ.REQ);
         socket.connect("tcp://localhost:1234");
         SocketRpcProtos.Request.Builder request = SocketRpcProtos.Request
                 .newBuilder()
@@ -85,13 +83,12 @@ public class TestServer {
         Controller controller = new Controller();
         SocketRpcProtos.Response response = SocketRpcProtos.Response.parseFrom(socket.recv());
         controller.readFrom(response);
-        socket.close();
         throw Exceptions.getFrom(controller);
     }
 
     @Test(expected = Exceptions.BadRequestProtoError.class)
     public void testBadRequestProtoError() throws InvalidProtocolBufferException, Exceptions.ProtoRpcException {
-        ZMQ.Socket socket = context.createSocket(ZMQ.REQ);
+        socket = context.createSocket(ZMQ.REQ);
         socket.connect("tcp://localhost:1234");
         SocketRpcProtos.Request.Builder request = SocketRpcProtos.Request
                 .newBuilder()
@@ -102,7 +99,6 @@ public class TestServer {
         Controller controller = new Controller();
         SocketRpcProtos.Response response = SocketRpcProtos.Response.parseFrom(socket.recv());
         controller.readFrom(response);
-        socket.close();
         throw Exceptions.getFrom(controller);
     }
 }
