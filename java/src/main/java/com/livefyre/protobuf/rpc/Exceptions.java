@@ -108,4 +108,36 @@ public class Exceptions {
         }
     }
 
+    static void getCauseAndThrow(Exception e) throws Exception {
+        Throwable t = e.getCause();
+        if (t instanceof TimeoutException) {
+            throw (TimeoutException) t;
+        }
+        if (t instanceof ChannelClosedException) {
+            throw (ChannelClosedException) t;
+        }
+        if (t instanceof BadResponseProtoError) {
+            throw (BadResponseProtoError) t;
+        }
+        if (t instanceof RpcError) {
+            throw (RpcError) t;
+        }
+        if (t instanceof RpcFailedError) {
+            throw (RpcFailedError) t;
+        }
+        if (t instanceof BadRequestDataError) {
+            throw (BadRequestDataError) t;
+        }
+        if (t instanceof  BadRequestProtoError) {
+            throw (BadRequestProtoError) t;
+        }
+        if (t instanceof ServiceNotFoundError) {
+            throw (ServiceNotFoundError) t;
+        }
+        if (t instanceof MethodNotFoundError) {
+            throw (MethodNotFoundError) t;
+        }
+        throw e;
+    }
+
 }

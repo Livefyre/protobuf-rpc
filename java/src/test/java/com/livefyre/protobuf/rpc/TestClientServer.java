@@ -129,8 +129,7 @@ public class TestClientServer {
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
-            Throwable t = e.getCause();
-            throw (Exceptions.TimeoutException) t;
+            Exceptions.getCauseAndThrow(e);
         }
     }
 }
