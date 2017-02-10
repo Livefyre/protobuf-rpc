@@ -100,18 +100,12 @@ public class Channel implements RpcChannel {
                     message.destroy();
                 }
             }
-            buffer.clear();
-            try {
-                buffer.add(requestQueue.poll(10, TimeUnit.MILLISECONDS));
-            } catch (InterruptedException e) {
-                logger.warn("request handler thread interrupted...");
-                break;
-            }
             requestQueue.drainTo(buffer);
             for (SocketRpcProtos.Request request : buffer) {
                 logger.debug("sending request, id -> {}, proto -> {}", request.getId(), request);
                 socket.send(request.toByteArray());
             }
+            buffer.clear();
         }
         socket.close();
         close();

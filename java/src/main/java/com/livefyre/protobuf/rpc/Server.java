@@ -92,6 +92,7 @@ public class Server {
             logger.warn("invalid request proto, b64content -> {}", new String(Base64.getEncoder().encode(content.getData())));
             response.setErrorCode(SocketRpcProtos.ErrorReason.INVALID_REQUEST_PROTO);
             send(socket, zMessage, response);
+            return;
         }
 
         response.setRequestId(request.getId());

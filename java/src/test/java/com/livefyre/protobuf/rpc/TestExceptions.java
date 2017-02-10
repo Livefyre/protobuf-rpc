@@ -3,7 +3,7 @@ package com.livefyre.protobuf.rpc;
 import com.googlecode.protobuf.socketrpc.SocketRpcProtos;
 import org.junit.Test;
 
-public class ExceptionsTest {
+public class TestExceptions {
 
     @Test(expected = Exceptions.TimeoutException.class)
     public void testClientErrors() throws Exception {
