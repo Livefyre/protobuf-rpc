@@ -65,7 +65,8 @@ public class Channel implements RpcChannel {
             this.response = response;
         }
 
-        @Override public void run() {
+        @Override
+        public void run() {
             handleResponse(response);
         }
     }
@@ -96,11 +97,12 @@ public class Channel implements RpcChannel {
             this.requests = requests;
         }
 
-        @Override public void run() {
+        @Override
+        public void run() {
             try {
                 LinkedList<SocketRpcProtos.Request> buffer =
                         new LinkedList<>();
-                while (true) {
+                while (!isClosed) {
                     buffer.clear();
                     buffer.add(requests.take());
                     requests.drainTo(buffer);
@@ -113,7 +115,8 @@ public class Channel implements RpcChannel {
             }
         }
 
-        @Override public void interrupt() {
+        @Override
+        public void interrupt() {
             super.interrupt();
             tryCloseSocket(socket);
         }
@@ -130,23 +133,26 @@ public class Channel implements RpcChannel {
             this.responseHandlerPool = responseHandlerPool;
         }
 
-        @Override public void run() {
-            try {
-                ZMQ.PollItem[] items = new ZMQ.PollItem[] { new ZMQ.PollItem(socket, ZMQ.Poller.POLLIN) };
-                while (true) {
-                    ZMQ.poll(items, 100);
-                    if (items[0].isReadable()) {
-                        SocketRpcProtos.Response response = SocketRpcProtos.Response.parseFrom(socket.recv());
-                        responseHandlerPool.execute(new ResponseHandler(response));
+        @Override
+        public void run() {
+            ZMQ.PollItem[] items = new ZMQ.PollItem[] { new ZMQ.PollItem(socket, ZMQ.Poller.POLLIN) };
+            while (!isClosed) {
+                ZMQ.poll(items, 100);
+                if (items[0].isReadable()) {
+                    SocketRpcProtos.Response response = null;
+                    try {
+                        response = SocketRpcProtos.Response.parseFrom(socket.recv());
+                    } catch (InvalidProtocolBufferException e) {
+                        e.printStackTrace();
                     }
+                    responseHandlerPool.execute(new ResponseHandler(response));
                 }
-            } catch (IOException e) {
-                responseHandlerPool.shutdown();
-                tryCloseSocket(socket);
             }
+            tryCloseSocket(socket);
         }
 
-        @Override public void interrupt() {
+        @Override
+        public void interrupt() {
             super.interrupt();
             tryCloseSocket(socket);
         }
@@ -234,8 +240,7 @@ public class Channel implements RpcChannel {
         ongoingRequests.put(id, request_);
 
         if (logger.isLoggable(Level.FINER)) {
-            logger.finer(String.format("O(%d) => %s(%s)",
-                    id, method.getFullName(), requestMessage));
+            logger.finer(String.format("O(%d) => %s(%s)", id, method.getFullName(), requestMessage));
         }
 
         SocketRpcProtos.Request requestData = SocketRpcProtos.Request.newBuilder()
@@ -265,8 +270,7 @@ public class Channel implements RpcChannel {
     }
 
     private void handleResponse(SocketRpcProtos.Response response) {
-        RequestMetadata request =
-                ongoingRequests.remove(response.getRequestId());
+        RequestMetadata request = ongoingRequests.remove(response.getRequestId());
         if (request == null) {
             logger.info("Unknown request. Possible timeout? " + response);
             return;
