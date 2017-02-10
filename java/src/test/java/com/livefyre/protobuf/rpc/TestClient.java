@@ -13,13 +13,13 @@ import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 
-public class TestClientServer {
+public class TestClient {
 
-    private Client client = null;
-    private Server server = null;
+    private Client client;
+    private Server server;
 
-    private ExecutorService cThreads = null;
-    private ExecutorService sThreads = null;
+    private ExecutorService cThreads;
+    private ExecutorService sThreads;
 
     private class Service extends TestService.Service {
 
@@ -108,8 +108,6 @@ public class TestClientServer {
     public void tearDown() {
         client.stop();
         server.tearDown();
-        sThreads = null;
-        cThreads = null;
     }
 
     @Test

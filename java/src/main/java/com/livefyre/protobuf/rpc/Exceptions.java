@@ -13,64 +13,58 @@ public class Exceptions {
 
     // channel exceptions
     static class TimeoutException extends ProtoRpcException {
-
         TimeoutException(String message) {
             super(message);
         }
     }
 
     static class ChannelClosedException extends ProtoRpcException {
-
         ChannelClosedException(String message) {
             super(message);
         }
     }
 
     static class BadResponseProtoError extends ProtoRpcException {
-
         BadResponseProtoError(String message) {
             super(message);
         }
     }
 
     // server exceptions
+    static class InvalidRequestProtoException extends ProtoRpcException {
+        InvalidRequestProtoException(String message) { super(message); }
+    }
     static class RpcError extends ProtoRpcException {
-
         RpcError(String message) {
             super(message);
         }
     }
 
     static class RpcFailedError extends ProtoRpcException {
-
         RpcFailedError(String message) {
             super(message);
         }
     }
 
     static class BadRequestDataError extends ProtoRpcException {
-
         BadRequestDataError(String message) {
             super(message);
         }
     }
 
     static class BadRequestProtoError extends ProtoRpcException {
-
         BadRequestProtoError(String message) {
             super(message);
         }
     }
 
     static class ServiceNotFoundError extends ProtoRpcException {
-
         ServiceNotFoundError(String message) {
             super(message);
         }
     }
 
     static class MethodNotFoundError extends ProtoRpcException {
-
         MethodNotFoundError(String message) {
             super(message);
         }
@@ -93,6 +87,8 @@ public class Exceptions {
         }
         // server errors
         switch (error_code) {
+            case INVALID_REQUEST_PROTO:
+                return new InvalidRequestProtoException(controller.errorText());
             case RPC_FAILED:
                 return new RpcFailedError(controller.errorText());
             case BAD_REQUEST_DATA:
@@ -118,6 +114,9 @@ public class Exceptions {
         }
         if (t instanceof BadResponseProtoError) {
             throw (BadResponseProtoError) t;
+        }
+        if (t instanceof  InvalidRequestProtoException) {
+            throw (InvalidRequestProtoException) t;
         }
         if (t instanceof RpcError) {
             throw (RpcError) t;

@@ -1,4 +1,3 @@
-// https://github.com/orbekk/protobuf-simple-rpc/blob/master/src/main/java/com/orbekk/protobuf/RpcChannel.java
 package com.livefyre.protobuf.rpc;
 
 import com.google.protobuf.Descriptors.MethodDescriptor;
@@ -8,11 +7,15 @@ import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcChannel;
 import com.google.protobuf.RpcController;
 import com.googlecode.protobuf.socketrpc.SocketRpcProtos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeromq.ZContext;
+import org.zeromq.ZFrame;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
+import org.zeromq.ZMsg;
 
-import java.io.IOException;
+import java.util.Base64;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -20,23 +23,22 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 
 public class Channel implements RpcChannel {
-    private static final Logger logger = Logger.getLogger(RpcChannel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(Channel.class);
     private final AtomicLong nextId = new AtomicLong(0);
     private final Timer timer;
+    private final ExecutorService requestHandlerPool = Executors.newSingleThreadExecutor();
     private final ExecutorService responseHandlerPool;
     private final BlockingQueue<SocketRpcProtos.Request> requestQueue;
     private final ConcurrentHashMap<Long, RequestMetadata> ongoingRequests = new ConcurrentHashMap<>();
-    private volatile OutgoingHandler outgoingHandler = null;
-    private volatile IncomingHandler incomingHandler = null;
 
     private String[] endpoints;
-    private ZContext context = null;
-    private ZMQ.Socket socket = null;
+    private ZContext context;
 
     private volatile boolean isClosed = false;
 
@@ -58,19 +60,6 @@ public class Channel implements RpcChannel {
         }
     }
 
-    private class ResponseHandler implements Runnable {
-        private final SocketRpcProtos.Response response;
-
-        ResponseHandler(SocketRpcProtos.Response response) {
-            this.response = response;
-        }
-
-        @Override
-        public void run() {
-            handleResponse(response);
-        }
-    }
-
     private class CancelRequestTask extends TimerTask {
         final long id;
 
@@ -80,6 +69,7 @@ public class Channel implements RpcChannel {
 
         @Override
         public void run() {
+            logger.warn("canceling request, id -> {}", id);
             RequestMetadata request = ongoingRequests.remove(id);
             if (request != null) {
                 cancelRequest(request, Errors.TIMEOUT);
@@ -87,82 +77,51 @@ public class Channel implements RpcChannel {
         }
     }
 
-    private class OutgoingHandler extends Thread {
-        private final ZMQ.Socket socket;
-        private final BlockingQueue<SocketRpcProtos.Request> requests;
-
-        OutgoingHandler(ZMQ.Socket socket, BlockingQueue<SocketRpcProtos.Request> requests) {
-            super("OutgoingHandler");
-            this.socket = socket;
-            this.requests = requests;
+    private void requestHandler() {
+        ZMQ.Socket socket = context.createSocket(ZMQ.DEALER);
+        for (String endpoint : endpoints) {
+            socket.connect(endpoint);
         }
-
-        @Override
-        public void run() {
+        LinkedList<SocketRpcProtos.Request> buffer = new LinkedList<>();
+        ZMQ.PollItem[] items = new ZMQ.PollItem[] { new ZMQ.PollItem(socket, ZMQ.Poller.POLLIN) };
+        while (!isClosed) {
+            ZMQ.poll(items, 10);
+            if (items[0].isReadable()) {
+                ZMsg message = ZMsg.recvMsg(socket);
+                ZFrame content = message.pop();
+                try {
+                    final SocketRpcProtos.Response response = SocketRpcProtos.Response.parseFrom(content.getData());
+                    responseHandlerPool.submit(() -> handleResponse(response));
+                } catch (InvalidProtocolBufferException e) {
+                    logger.warn("unable to parse proto response, content -> {}",
+                            new String(Base64.getEncoder().encode(content.getData())));
+                } finally {
+                    content.destroy();
+                    message.destroy();
+                }
+            }
+            buffer.clear();
             try {
-                LinkedList<SocketRpcProtos.Request> buffer =
-                        new LinkedList<>();
-                while (!isClosed) {
-                    buffer.clear();
-                    buffer.add(requests.take());
-                    requests.drainTo(buffer);
-                    for (SocketRpcProtos.Request request : buffer) {
-                        socket.send(request.toByteArray());
-                    }
-                }
+                buffer.add(requestQueue.poll(10, TimeUnit.MILLISECONDS));
             } catch (InterruptedException e) {
-                tryCloseSocket(socket);
+                logger.warn("request handler thread interrupted...");
+                break;
+            }
+            requestQueue.drainTo(buffer);
+            for (SocketRpcProtos.Request request : buffer) {
+                logger.debug("sending request, id -> {}, proto -> {}", request.getId(), request);
+                socket.send(request.toByteArray());
             }
         }
-
-        @Override
-        public void interrupt() {
-            super.interrupt();
-            tryCloseSocket(socket);
-        }
-    }
-
-    private class IncomingHandler extends Thread {
-        private ZMQ.Socket socket;
-        private ExecutorService responseHandlerPool;
-
-        IncomingHandler(ZMQ.Socket socket,
-                               ExecutorService responseHandlerPool) {
-            super("IncomingHandler");
-            this.socket = socket;
-            this.responseHandlerPool = responseHandlerPool;
-        }
-
-        @Override
-        public void run() {
-            ZMQ.PollItem[] items = new ZMQ.PollItem[] { new ZMQ.PollItem(socket, ZMQ.Poller.POLLIN) };
-            while (!isClosed) {
-                ZMQ.poll(items, 100);
-                if (items[0].isReadable()) {
-                    SocketRpcProtos.Response response = null;
-                    try {
-                        response = SocketRpcProtos.Response.parseFrom(socket.recv());
-                    } catch (InvalidProtocolBufferException e) {
-                        e.printStackTrace();
-                    }
-                    responseHandlerPool.execute(new ResponseHandler(response));
-                }
-            }
-            tryCloseSocket(socket);
-        }
-
-        @Override
-        public void interrupt() {
-            super.interrupt();
-            tryCloseSocket(socket);
-        }
+        socket.close();
+        close();
     }
 
     public static Channel createOrNull(String[] endpoints, int numConcurrentRequests, ExecutorService responseHandlerPool) {
         try {
             return create(endpoints, numConcurrentRequests, responseHandlerPool);
         } catch (ZMQException e) {
-            logger.log(Level.WARNING, "Unable to create RPC channel.", e);
+            logger.warn("unable to create rpc channel", e);
             return null;
         }
     }
@@ -183,37 +142,20 @@ public class Channel implements RpcChannel {
     }
 
     public void start() throws ZMQException {
-        if (outgoingHandler != null) {
+        logger.info("starting client...");
+        if (context != null) {
             throw new IllegalStateException("start() called twice.");
         }
         context = new ZContext(1);
-        socket = context.createSocket(ZMQ.DEALER);
-        for (String endpoint : endpoints) {
-            socket.connect(endpoint);
-        }
-        outgoingHandler = new OutgoingHandler(socket, requestQueue);
-        incomingHandler = new IncomingHandler(socket, responseHandlerPool);
-
-//        outgoingHandler.setDaemon(true);
-//        incomingHandler.setDaemon(true);
-
-        outgoingHandler.start();
-        incomingHandler.start();
+        requestHandlerPool.submit(this::requestHandler);
     }
 
     public void close() {
+        logger.info("closing client...");
         isClosed = true;
-        tryCloseSocket(socket);
+        cancelAllRequests(Errors.CHANNEL_CLOSED);
         context.close();
-        outgoingHandler.interrupt();
-        incomingHandler.interrupt();
         timer.cancel();
-        cancelAllRequests(Errors.CHANNEL_CLOSED);
-    }
-
-    private void tryCloseSocket(ZMQ.Socket socket) {
-        cancelAllRequests(Errors.CHANNEL_CLOSED);
-        socket.close();
     }
 
     private void addTimeoutHandler(RequestMetadata request) {
@@ -239,9 +181,7 @@ public class Channel implements RpcChannel {
         addTimeoutHandler(request_);
         ongoingRequests.put(id, request_);
 
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(String.format("O(%d) => %s(%s)", id, method.getFullName(), requestMessage));
-        }
+        logger.debug("queueing request, id -> {}, proto -> {}", id, requestMessage);
 
         SocketRpcProtos.Request requestData = SocketRpcProtos.Request.newBuilder()
                 .setId(id)
@@ -258,9 +198,11 @@ public class Channel implements RpcChannel {
     }
 
     private void cancelAllRequests(Errors channelError) {
+        logger.info("canceling oustanding requests...");
         for (RequestMetadata request : ongoingRequests.values()) {
             cancelRequest(request, channelError);
         }
+        ongoingRequests.clear();
     }
 
     private void cancelRequest(RequestMetadata request, Errors channelError) {
@@ -272,7 +214,7 @@ public class Channel implements RpcChannel {
     private void handleResponse(SocketRpcProtos.Response response) {
         RequestMetadata request = ongoingRequests.remove(response.getRequestId());
         if (request == null) {
-            logger.info("Unknown request. Possible timeout? " + response);
+            logger.warn("unknown response, proto -> {}", response);
             return;
         }
         try {
@@ -281,14 +223,10 @@ public class Channel implements RpcChannel {
                 responsePb = request.responsePrototype.toBuilder()
                         .mergeFrom(response.getResponseProto()).build();
             }
-            if (logger.isLoggable(Level.FINER)) {
-                logger.finer(String.format("O(%d) <= %s",
-                        response.getRequestId(),
-                        responsePb));
-            }
+            logger.debug("received response, id -> {}, proto -> {}", response.getRequestId(), responsePb);
             request.controller.readFrom(response);
             if (responsePb == null && request.controller.isOk()) {
-                logger.warning("Invalid response from server: " + response);
+                logger.warn("invalid response -> {}", response);
                 request.controller.setFailed("invalid response from server.");
             }
             request.done.run(responsePb);

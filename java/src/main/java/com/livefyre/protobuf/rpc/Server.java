@@ -2,13 +2,17 @@ package com.livefyre.protobuf.rpc;
 
 import com.google.protobuf.*;
 import com.googlecode.protobuf.socketrpc.SocketRpcProtos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeromq.*;
 
+import java.util.Base64;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Server {
 
+    private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private volatile boolean isRunning = false;
     private final String address;
     private final int numConcurrency;
@@ -31,6 +35,7 @@ public class Server {
     }
 
     void start() {
+        logger.info("starting server...");
         context = new ZContext();
 
         frontend = context.createSocket(ZMQ.ROUTER);
@@ -47,11 +52,16 @@ public class Server {
                 worker.connect("inproc://backend");
                 ZMQ.PollItem[] items = new ZMQ.PollItem[] { new ZMQ.PollItem(worker, ZMQ.Poller.POLLIN) };
                 while (isRunning) {
-                    ZMQ.poll(items, 100);
+                    ZMQ.poll(items, 10);
                     if (items[0].isReadable()) {
-                        handleRequest(worker, ZMsg.recvMsg(worker));
+                        try {
+                            handleRequest(worker, ZMsg.recvMsg(worker));
+                        } catch (Exception e) {
+                            logger.warn("unhandled exception processing request", e);
+                        }
                     }
                 }
+                logger.info("worker closing...");
                 worker.close();
             });
         }
@@ -62,6 +72,7 @@ public class Server {
     }
 
     void tearDown() {
+        logger.info("stopping server...");
         isRunning = false;
         requestHandlerPool.shutdown();
         frontend.close();
@@ -78,6 +89,7 @@ public class Server {
         try {
             request = SocketRpcProtos.Request.parseFrom(content.getData());
         } catch (InvalidProtocolBufferException e) {
+            logger.warn("invalid request proto, b64content -> {}", new String(Base64.getEncoder().encode(content.getData())));
             response.setErrorCode(SocketRpcProtos.ErrorReason.INVALID_REQUEST_PROTO);
             send(socket, zMessage, response);
         }
@@ -86,6 +98,8 @@ public class Server {
 
         Descriptors.MethodDescriptor method = service.getDescriptorForType().findMethodByName(request.getMethodName());
         if (method == null) {
+            logger.warn("method not found, id -> {}, method -> {}, proto -> {}",
+                    request.getId(), request.getMethodName(), request);
             response.setErrorCode(SocketRpcProtos.ErrorReason.METHOD_NOT_FOUND);
             send(socket, zMessage, response);
             return;
@@ -94,7 +108,9 @@ public class Server {
         Message requestMessage;
         try {
             requestMessage = service.getRequestPrototype(method).toBuilder().mergeFrom(request.getRequestProto()).build();
-        } catch (InvalidProtocolBufferException e) {
+        } catch (InvalidProtocolBufferException|UninitializedMessageException e) {
+            logger.warn("bad request proto, id -> {}, b64proto -> {}", request.getId(),
+                    new String(Base64.getEncoder().encode(request.getRequestProto().toByteArray())));
             response.setErrorCode(SocketRpcProtos.ErrorReason.BAD_REQUEST_PROTO);
             send(socket, zMessage, response);
             return;
@@ -110,6 +126,7 @@ public class Server {
                 }
             });
         } catch (Exception e) {
+            logger.warn("exception invoking service, id -> {}, proto -> ", request.getId(), requestMessage);
             response.setErrorCode(SocketRpcProtos.ErrorReason.RPC_ERROR);
             response.setErrorMessage(e.getMessage());
             send(socket, zMessage, response);
@@ -117,6 +134,7 @@ public class Server {
     }
 
     private void send(ZMQ.Socket socket, ZMsg zMessage, SocketRpcProtos.Response.Builder response) {
+        logger.debug("sending response, proto -> {}", response.build());
         zMessage.add(new ZFrame(response.build().toByteArray()));
         zMessage.send(socket);
     }
