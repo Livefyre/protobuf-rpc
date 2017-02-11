@@ -11,7 +11,7 @@
     <artifactId>protobuf-rpc</artifactId>
     <name>protobuf-rpc</name>
     <!-- Release new maven version via jenkins, ask: @jov or @matt -->
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.1.2-SNAPSHOT</version>
     <url>https://github.com/Livefyre/protobuf-rpc</url>
 
     <scm>
@@ -158,6 +158,15 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.2</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <tagNameFormat>java_v@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
         </plugins>

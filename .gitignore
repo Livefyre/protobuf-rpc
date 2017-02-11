@@ -16,3 +16,4 @@ bin
 nosetests.xml
 java/src/main/resources/*.proto
 *.egg-info/
+node/rpc.proto

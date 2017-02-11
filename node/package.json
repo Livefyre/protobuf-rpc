@@ -29,5 +29,8 @@
     "blanket": {
       "pattern": "rpc/nodejs/src"
     }
+  },
+  "scripts": {
+    "test": "echo 'no node tests'"
   }
 }
