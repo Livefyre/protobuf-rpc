@@ -129,7 +129,7 @@ public class TestClient {
     @After
     public void tearDown() {
         client.stop();
-        server.tearDown();
+        server.stop();
     }
 
     @Test

@@ -79,7 +79,7 @@ public class TestServer {
 
     @After
     public void tearDown() {
-        server.tearDown();
+        server.stop();
         socket.close();
     }
 

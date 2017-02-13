@@ -81,7 +81,11 @@ public class Channel implements RpcChannel {
         ZContext shadowContext = ZContext.shadow(context);
         ZMQ.Socket socket = shadowContext.createSocket(ZMQ.DEALER);
         for (String endpoint : endpoints) {
-            socket.connect(endpoint);
+            try {
+                socket.connect(endpoint);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         LinkedList<SocketRpcProtos.Request> buffer = new LinkedList<>();
         ZMQ.PollItem[] items = new ZMQ.PollItem[] { new ZMQ.PollItem(socket, ZMQ.Poller.POLLIN) };

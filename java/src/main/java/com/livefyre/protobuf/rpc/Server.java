@@ -74,11 +74,18 @@ public class Server {
         tearDown();
     }
 
-    void tearDown() {
+    public void stop() {
         logger.info("stopping server...");
         isRunning = false;
-        frontend.close();
-        backend.close();
+    }
+
+    private void tearDown() {
+        requestHandlerPool.shutdown();
+        try {
+            requestHandlerPool.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            requestHandlerPool.shutdownNow();
+        }
         context.destroy();
     }
 
@@ -139,8 +146,6 @@ public class Server {
     private void send(ZMQ.Socket socket, ZMsg zMessage, SocketRpcProtos.Response.Builder response) {
         logger.debug("sending response, proto -> {}", response.build());
         zMessage.add(new ZFrame(response.build().toByteArray()));
-        if (isRunning) {
-            zMessage.send(socket);
-        }
+        zMessage.send(socket);
     }
 }
