@@ -77,7 +77,9 @@ public class Channel implements RpcChannel {
     }
 
     private void requestHandler() {
-        ZMQ.Socket socket = context.createSocket(ZMQ.DEALER);
+        // https://github.com/zeromq/jeromq/wiki/Sharing-ZContext-between-thread
+        ZContext shadowContext = ZContext.shadow(context);
+        ZMQ.Socket socket = shadowContext.createSocket(ZMQ.DEALER);
         for (String endpoint : endpoints) {
             socket.connect(endpoint);
         }
@@ -106,7 +108,7 @@ public class Channel implements RpcChannel {
             }
             buffer.clear();
         }
-        socket.close();
+        shadowContext.destroy();
         close();
     }
 

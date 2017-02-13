@@ -9,6 +9,7 @@ import org.zeromq.*;
 import java.util.Base64;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Server {
 
@@ -48,7 +49,9 @@ public class Server {
 
         for (int i = 0; i < numConcurrency; i++) {
             requestHandlerPool.submit(() -> {
-                ZMQ.Socket worker = context.createSocket(ZMQ.DEALER);
+                // https://github.com/zeromq/jeromq/wiki/Sharing-ZContext-between-thread
+                ZContext shadowContext = ZContext.shadow(context);
+                ZMQ.Socket worker = shadowContext.createSocket(ZMQ.DEALER);
                 worker.connect("inproc://backend");
                 ZMQ.PollItem[] items = new ZMQ.PollItem[] { new ZMQ.PollItem(worker, ZMQ.Poller.POLLIN) };
                 while (isRunning) {
@@ -62,7 +65,7 @@ public class Server {
                     }
                 }
                 logger.info("worker closing...");
-                worker.close();
+                shadowContext.destroy();
             });
         }
 
@@ -74,7 +77,6 @@ public class Server {
     void tearDown() {
         logger.info("stopping server...");
         isRunning = false;
-        requestHandlerPool.shutdown();
         frontend.close();
         backend.close();
         context.destroy();
@@ -137,6 +139,8 @@ public class Server {
     private void send(ZMQ.Socket socket, ZMsg zMessage, SocketRpcProtos.Response.Builder response) {
         logger.debug("sending response, proto -> {}", response.build());
         zMessage.add(new ZFrame(response.build().toByteArray()));
-        zMessage.send(socket);
+        if (isRunning) {
+            zMessage.send(socket);
+        }
     }
 }

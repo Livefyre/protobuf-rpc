@@ -28,7 +28,7 @@ clean:
 	git clean -dfx -e *.iml -e .idea
 
 package: all
-	$(PYTHON) setup.py $(DISTRIBUTE)
+	$(PYTHON) setup.py $(DISTRIBUTE) -r livefyre
 
 node/rpc.proto:
 	cp protos/rpc.proto node

@@ -76,6 +76,7 @@ public class TestServer {
         socket.connect("tcp://localhost:1234");
         SocketRpcProtos.Request.Builder request = SocketRpcProtos.Request
                 .newBuilder()
+                .setId(1)
                 .setServiceName("foo")
                 .setMethodName("bar")
                 .setRequestProto(TestService.Request.getDefaultInstance().toByteString());
@@ -92,6 +93,7 @@ public class TestServer {
         socket.connect("tcp://localhost:1234");
         SocketRpcProtos.Request.Builder request = SocketRpcProtos.Request
                 .newBuilder()
+                .setId(1)
                 .setServiceName("com.livefyre.protobuf.rpc.Service")
                 .setMethodName("Test")
                 .setRequestProto(SocketRpcProtos.Request.getDefaultInstance().toByteString());
