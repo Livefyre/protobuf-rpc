@@ -50,9 +50,7 @@ public class TestServer {
     }
 
     private static int getAvailablePort() {
-        ServerSocket socket = null;
-        try {
-            socket = new ServerSocket(0);
+        try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
         } catch (IOException e) {
             e.printStackTrace();
@@ -71,7 +69,11 @@ public class TestServer {
 
         sThreads.submit(() -> {
             server = Server.create(endpoint, 1, new Service());
-            server.start();
+            try {
+                server.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
 

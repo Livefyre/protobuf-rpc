@@ -117,7 +117,11 @@
                                     </fileset>
                                 </path>
                                 <pathconvert pathsep=" " property="protobuf.input.filepaths" refid="protobuf.input.filepaths.path"/>
-                                <exec executable="protoc" failonerror="true">
+                                <condition property="protoc.exec" value="protoc-2.5.0" else="protoc">
+                                    <!-- Check for the protoc 2.5 executable on Jenkins-->
+                                    <available file="/usr/local/bin/protoc-2.5.0" type="file" />
+                                </condition>
+                                <exec executable="${protoc.exec}" failonerror="true">
                                     <arg value="-I"/>
                                     <arg value="${protobuf.input.directory}"/>
                                     <arg value="--java_out"/>

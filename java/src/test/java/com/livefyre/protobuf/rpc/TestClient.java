@@ -18,7 +18,6 @@ import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 
-@Ignore
 public class TestClient {
 
     private static final Logger logger = LoggerFactory.getLogger(TestClient.class);
@@ -99,9 +98,7 @@ public class TestClient {
     }
 
     private static int getAvailablePort() {
-        ServerSocket socket = null;
-        try {
-            socket = new ServerSocket(0);
+        try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
         } catch (IOException e) {
             e.printStackTrace();
