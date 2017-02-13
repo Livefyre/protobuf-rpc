@@ -50,22 +50,26 @@ public class Server {
         for (int i = 0; i < numConcurrency; i++) {
             requestHandlerPool.submit(() -> {
                 // https://github.com/zeromq/jeromq/wiki/Sharing-ZContext-between-thread
-                ZContext shadowContext = ZContext.shadow(context);
-                ZMQ.Socket worker = shadowContext.createSocket(ZMQ.DEALER);
-                worker.connect("inproc://backend");
-                ZMQ.PollItem[] items = new ZMQ.PollItem[] { new ZMQ.PollItem(worker, ZMQ.Poller.POLLIN) };
-                while (isRunning) {
-                    ZMQ.poll(items, 10);
-                    if (items[0].isReadable()) {
-                        try {
-                            handleRequest(worker, ZMsg.recvMsg(worker));
-                        } catch (Exception e) {
-                            logger.warn("unhandled exception processing request", e);
+                try {
+                    ZContext shadowContext = ZContext.shadow(context);
+                    ZMQ.Socket worker = shadowContext.createSocket(ZMQ.DEALER);
+                    worker.connect("inproc://backend");
+                    ZMQ.PollItem[] items = new ZMQ.PollItem[] { new ZMQ.PollItem(worker, ZMQ.Poller.POLLIN) };
+                    while (isRunning) {
+                        ZMQ.poll(items, 10);
+                        if (items[0].isReadable()) {
+                            try {
+                                handleRequest(worker, ZMsg.recvMsg(worker));
+                            } catch (Exception e) {
+                                logger.warn("unhandled exception processing request", e);
+                            }
                         }
                     }
+                    logger.info("worker closing...");
+                    shadowContext.destroy();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                logger.info("worker closing...");
-                shadowContext.destroy();
             });
         }
 

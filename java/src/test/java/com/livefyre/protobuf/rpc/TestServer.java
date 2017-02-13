@@ -73,8 +73,6 @@ public class TestServer {
             server = Server.create(endpoint, 1, new Service());
             server.start();
         });
-
-        socket = context.createSocket(ZMQ.REQ);
     }
 
     @After
