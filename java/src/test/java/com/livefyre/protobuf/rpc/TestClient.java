@@ -5,7 +5,11 @@ import com.google.protobuf.RpcController;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,6 +18,8 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertEquals;
 
 public class TestClient {
+
+    private static final Logger logger = LoggerFactory.getLogger(TestClient.class);
 
     private Client client;
     private Server server;
@@ -90,17 +96,33 @@ public class TestClient {
         }
     }
 
+    private static int getAvailablePort() {
+        ServerSocket socket = null;
+        try {
+            socket = new ServerSocket(0);
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return 9999;
+    }
+
     @Before
     public void setUp(){
         sThreads = Executors.newFixedThreadPool(1);
         cThreads = Executors.newFixedThreadPool(1);
 
+        int port = TestClient.getAvailablePort();
+        logger.info("using port -> {}", port);
+
+        String endpoint = "tcp://localhost:" + port;
+
         sThreads.submit(() -> {
-           server = Server.create("tcp://localhost:1234", 1, new Service());
+           server = Server.create(endpoint, 1, new Service());
            server.start();
         });
 
-        client = new Client(new String[]{"tcp://localhost:1234"}, 1, cThreads, 2000);
+        client = new Client(new String[]{endpoint}, 1, cThreads, 2000);
         client.start();
     }
 

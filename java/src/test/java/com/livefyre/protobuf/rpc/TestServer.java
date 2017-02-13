@@ -7,19 +7,27 @@ import com.googlecode.protobuf.socketrpc.SocketRpcProtos;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TestServer {
+
+    private static final Logger logger = LoggerFactory.getLogger(TestServer.class);
 
     private Server server;
     private ExecutorService sThreads;
 
     private ZContext context =  new ZContext();
     private ZMQ.Socket socket;
+
+    private String endpoint;
 
     private class Service extends TestService.Service {
 
@@ -41,12 +49,28 @@ public class TestServer {
         }
     }
 
+    private static int getAvailablePort() {
+        ServerSocket socket = null;
+        try {
+            socket = new ServerSocket(0);
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return 9999;
+    }
+
     @Before
     public void setUp(){
         sThreads = Executors.newFixedThreadPool(1);
 
+        int port = TestServer.getAvailablePort();
+        logger.info("using port -> {}", port);
+
+        endpoint = "tcp://localhost:" + port;
+
         sThreads.submit(() -> {
-            server = Server.create("tcp://localhost:1234", 1, new Service());
+            server = Server.create(endpoint, 1, new Service());
             server.start();
         });
 
@@ -62,7 +86,7 @@ public class TestServer {
     @Test(expected = Exceptions.InvalidRequestProtoException.class)
     public void testInvalidRequestProto() throws Exceptions.ProtoRpcException, InvalidProtocolBufferException {
         socket = context.createSocket(ZMQ.REQ);
-        socket.connect("tcp://localhost:1234");
+        socket.connect(endpoint);
         socket.send("foo");
         Controller controller = new Controller();
         SocketRpcProtos.Response response = SocketRpcProtos.Response.parseFrom(socket.recv());
@@ -73,7 +97,7 @@ public class TestServer {
     @Test(expected = Exceptions.MethodNotFoundError.class)
     public void testMethodNotFoundError() throws InvalidProtocolBufferException, Exceptions.ProtoRpcException {
         socket = context.createSocket(ZMQ.REQ);
-        socket.connect("tcp://localhost:1234");
+        socket.connect(endpoint);
         SocketRpcProtos.Request.Builder request = SocketRpcProtos.Request
                 .newBuilder()
                 .setId(1)
@@ -90,7 +114,7 @@ public class TestServer {
     @Test(expected = Exceptions.BadRequestProtoError.class)
     public void testBadRequestProtoError() throws InvalidProtocolBufferException, Exceptions.ProtoRpcException {
         socket = context.createSocket(ZMQ.REQ);
-        socket.connect("tcp://localhost:1234");
+        socket.connect(endpoint);
         SocketRpcProtos.Request.Builder request = SocketRpcProtos.Request
                 .newBuilder()
                 .setId(1)
