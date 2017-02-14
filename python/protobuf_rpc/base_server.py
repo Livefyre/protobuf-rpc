@@ -43,6 +43,7 @@ class ProtoBufRPCServer(object):
         except Exception as e:
             return self.build_error_response(e.message, RPC_ERROR)
 
+        response.request_id = req_obj.id
         return response
 
     def parse_outer_request(self, request):

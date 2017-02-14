@@ -31,32 +31,42 @@ message Request {
 
   // RPC service full name
   required string service_name = 1;
-  
+
   // RPC method name
   required string method_name = 2;
-  
+
   // RPC request proto
   required bytes request_proto = 3;
+
+  optional uint64 id = 4;
 }
 
 message Response {
 
   // RPC response proto
   optional bytes response_proto = 1;
-  
+
   // Error, if any
   optional string error_message = 2;
-  
+
   // Was callback invoked
   optional bool callback = 3 [default = false];
-  
+
   // Error Reason
   optional ErrorReason error_code = 4 [default = NO_ERROR];
+
+  optional uint64 request_id = 5;
+
+  optional uint64 id = 6;
+
+  optional bool has_failed = 7;
+
+  optional bool canceled = 8;
 }
 
 // Possible error reasons
 // The server-side errors are returned in the response from the server.
-// The client-side errors are returned by the client-side code when it doesn't 
+// The client-side errors are returned by the client-side code when it doesn't
 // have a response from the server.
 enum ErrorReason {
 
@@ -70,7 +80,7 @@ enum ErrorReason {
   METHOD_NOT_FOUND = 4; // Method not found on server
   RPC_ERROR = 5; // Rpc threw exception on server
   RPC_FAILED = 6; // Rpc failed on server
-  
+
   // Client-side errors (these are returned by the client-side code)
   INVALID_REQUEST_PROTO = 7; // Rpc was called with invalid request proto
   BAD_RESPONSE_PROTO = 8; // Server returned a bad response proto

@@ -1,7 +1,15 @@
 machine:
   python:
     version: 2.7.3
-
+  java:
+      version: oraclejdk8
+checkout:
+  post:
+    - mkdir -p /home/ubuntu/.m2/
+    - cp circle-settings.xml /home/ubuntu/.m2/settings.xml # LF Maven repo
+dependencies:
+  pre:
+    - dpkg -l protobuf-compiler | grep protobuf-compiler | awk '{print $3}' | grep '2.5.0' || (sudo apt-get update && sudo apt-get install protobuf-compiler)
 test:
   override:
     - make test

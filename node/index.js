@@ -3,7 +3,7 @@ var Protobuf = require('protobufjs');
 
 var builder = Protobuf.newBuilder();
 Protobuf.loadProtoFile({
-  root: path.join(__dirname, '../protobuf_rpc/protos'),
+  root: __dirname,
   file: 'rpc.proto'
 }, builder);
 var root = builder.build();
