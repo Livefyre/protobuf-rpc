@@ -11,7 +11,7 @@
     <artifactId>protobuf-rpc</artifactId>
     <name>protobuf-rpc</name>
     <!-- Release new maven version via jenkins, ask: @jov or @matt -->
-    <version>1.1.2-SNAPSHOT</version>
+    <version>1.1.3-SNAPSHOT</version>
     <url>https://github.com/Livefyre/protobuf-rpc</url>
 
     <scm>
@@ -107,26 +107,26 @@
                         <phase>generate-sources</phase>
                         <configuration>
                             <target>
-                                <!--<property name="protoc.filename" value="protoc-${protobuf.version}-${os.detected.classifier}.exe"/>-->
-                                <!--<property name="protoc.filepath" value="${project.build.directory}/${protoc.filename}"/>-->
-                                <!--<chmod file="${protoc.filepath}" perm="ugo+rx"/>-->
+                                <!--<property name="protoc.filename" value="protoc-${protobuf.version}-${os.detected.classifier}.exe" />-->
+                                <!--<property name="protoc.filepath" value="${project.build.directory}/${protoc.filename}" />-->
+                                <!--<chmod file="${protoc.filepath}" perm="ugo+rx" />-->
                                 <mkdir dir="${protobuf.output.directory}" />
                                 <path id="protobuf.input.filepaths.path">
                                     <fileset dir="${protobuf.input.directory}">
-                                        <include name="**/*.proto"/>
+                                        <include name="**/*.proto" />
                                     </fileset>
                                 </path>
-                                <pathconvert pathsep=" " property="protobuf.input.filepaths" refid="protobuf.input.filepaths.path"/>
+                                <pathconvert pathsep=" " property="protobuf.input.filepaths" refid="protobuf.input.filepaths.path" />
                                 <condition property="protoc.exec" value="protoc-2.5.0" else="protoc">
                                     <!-- Check for the protoc 2.5 executable on Jenkins-->
                                     <available file="/usr/local/bin/protoc-2.5.0" type="file" />
                                 </condition>
                                 <exec executable="${protoc.exec}" failonerror="true">
-                                    <arg value="-I"/>
-                                    <arg value="${protobuf.input.directory}"/>
-                                    <arg value="--java_out"/>
-                                    <arg value="${protobuf.output.directory}"/>
-                                    <arg line="${protobuf.input.filepaths}"/>
+                                    <arg value="-I" />
+                                    <arg value="${protobuf.input.directory}" />
+                                    <arg value="--java_out" />
+                                    <arg value="${protobuf.output.directory}" />
+                                    <arg line="${protobuf.input.filepaths}" />
                                 </exec>
                             </target>
                         </configuration>
