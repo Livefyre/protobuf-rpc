@@ -4,7 +4,6 @@ import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,16 +77,14 @@ public class TestClient {
 
         Future<TestService.Response> test(TestService.Request request) {
             Controller controller = new Controller(timeout);
-            AsyncRpc<TestService.Response> async = new AsyncRpc<>(controller);
-            service.test(controller, request, async.newCallback());
-            return async.newFuture();
+            service.test(controller, request, controller.newCallback());
+            return controller.newFuture();
         }
 
         Future<TestService.Response> testTimeout(TestService.Request request) {
             Controller controller = new Controller(timeout);
-            AsyncRpc<TestService.Response> async = new AsyncRpc<>(controller);
-            service.testTimeout(controller, request, async.newCallback());
-            return async.newFuture();
+            service.testTimeout(controller, request, controller.newCallback());
+            return controller.newFuture();
         }
     }
 

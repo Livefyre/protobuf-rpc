@@ -1,15 +1,19 @@
 // https://github.com/orbekk/protobuf-simple-rpc/blob/master/src/main/java/com/orbekk/protobuf/Rpc.java
 package com.livefyre.protobuf.rpc;
 
+import com.google.protobuf.Message;
 import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
 import com.googlecode.protobuf.socketrpc.SocketRpcProtos;
 import com.googlecode.protobuf.socketrpc.SocketRpcProtos.Response;
 
+import java.util.concurrent.CompletableFuture;
+
 public class Controller implements RpcController {
     final long timeoutMillis;
-    volatile ControllerState state =
+    private volatile ControllerState state =
             new ControllerState(false, false, null, null, null);
+    private final CompletableFuture<Message> future = new CompletableFuture<>();
 
     private class ControllerState {
         final boolean hasFailed;
@@ -88,5 +92,20 @@ public class Controller implements RpcController {
     @Override public String toString() {
         return String.format("Controller[ok(%s) canceled(%s) failed(%s) error_text(%s)]",
                 isOk(), isCanceled(), failed(), errorText());
+    }
+
+    public <T extends Message> CompletableFuture<T> newFuture() {
+        return (CompletableFuture<T>) future;
+    }
+
+    public <T extends Message> RpcCallback<T> newCallback() {
+        return new RpcCallback<T>() {
+            @Override
+            public void run(T t) {
+                if (!isOk()) {
+                    future.completeExceptionally(Exceptions.getFrom(Controller.this));
+                } else { future.complete(t); }
+            }
+        };
     }
 }
