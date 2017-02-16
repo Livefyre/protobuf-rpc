@@ -15,8 +15,8 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 import org.zeromq.ZMsg;
 
+import java.util.ArrayList;
 import java.util.Base64;
-import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -83,7 +83,7 @@ public class Channel implements RpcChannel {
         for (String endpoint : endpoints) {
             socket.connect(endpoint);
         }
-        LinkedList<SocketRpcProtos.Request> buffer = new LinkedList<>();
+        ArrayList<SocketRpcProtos.Request> buffer = new ArrayList<>();
         ZMQ.PollItem[] items = new ZMQ.PollItem[] { new ZMQ.PollItem(socket, ZMQ.Poller.POLLIN) };
         while (!isClosed) {
             ZMQ.poll(items, 10);
@@ -109,7 +109,7 @@ public class Channel implements RpcChannel {
             buffer.clear();
         }
         shadowContext.destroy();
-        close();
+        isClosed = true;
     }
 
     public static Channel createOrNull(String[] endpoints, int numConcurrentRequests, ExecutorService responseHandlerPool) {
@@ -136,11 +136,8 @@ public class Channel implements RpcChannel {
         this.responseHandlerPool = responseHandlerPool;
     }
 
-    public void start() throws ZMQException {
+    private void start() throws ZMQException {
         logger.info("starting client...");
-        if (context != null) {
-            throw new IllegalStateException("start() called twice.");
-        }
         context = new ZContext(1);
         requestHandlerPool.execute(this::requestHandler);
     }
@@ -154,7 +151,7 @@ public class Channel implements RpcChannel {
     }
 
     private void addTimeoutHandler(RequestMetadata request) {
-        long timeout = request.controller.getTimeout();
+        long timeout = request.controller.timeoutMillis;
         if (timeout > 0) {
             timer.schedule(new CancelRequestTask(request.id), timeout);
         }
@@ -201,8 +198,7 @@ public class Channel implements RpcChannel {
     }
 
     private void cancelRequest(RequestMetadata request, Errors channelError) {
-        request.controller.setFailed(channelError);
-        request.controller.cancel();
+        request.controller.startCancel(channelError);
         request.done.run(null);
     }
 
@@ -220,10 +216,6 @@ public class Channel implements RpcChannel {
             }
             logger.debug("received response, id -> {}, proto -> {}", response.getRequestId(), responsePb);
             request.controller.readFrom(response);
-            if (responsePb == null && request.controller.isOk()) {
-                logger.warn("invalid response -> {}", response);
-                request.controller.setFailed("invalid response from server.");
-            }
             request.done.run(responsePb);
         } catch (InvalidProtocolBufferException e) {
             cancelRequest(request, Errors.INVALID_RESPONSE);

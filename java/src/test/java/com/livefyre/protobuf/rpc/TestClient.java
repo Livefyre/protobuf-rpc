@@ -76,21 +76,15 @@ public class TestClient {
             channel.close();
         }
 
-        private Controller newController() {
-            Controller controller = new Controller();
-            controller.setTimeout(timeout);
-            return controller;
-        }
-
         Future<TestService.Response> test(TestService.Request request) {
-            Controller controller = newController();
+            Controller controller = new Controller(timeout);
             AsyncRpc<TestService.Response> async = new AsyncRpc<>(controller);
             service.test(controller, request, async.newCallback());
             return async.newFuture();
         }
 
         Future<TestService.Response> testTimeout(TestService.Request request) {
-            Controller controller = newController();
+            Controller controller = new Controller(timeout);
             AsyncRpc<TestService.Response> async = new AsyncRpc<>(controller);
             service.testTimeout(controller, request, async.newCallback());
             return async.newFuture();

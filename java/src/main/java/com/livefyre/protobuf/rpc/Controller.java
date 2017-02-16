@@ -6,116 +6,84 @@ import com.google.protobuf.RpcController;
 import com.googlecode.protobuf.socketrpc.SocketRpcProtos;
 import com.googlecode.protobuf.socketrpc.SocketRpcProtos.Response;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 public class Controller implements RpcController {
-    private volatile String errorMessage = "";
-    private volatile boolean hasFailed;
-    private volatile boolean canceled;
-    private volatile long timeoutMillis = 0;
-    private volatile List<RpcCallback<Object>> cancelNotificationListeners = null;
-    private volatile Channel.Errors channelError = null;
-    private volatile SocketRpcProtos.ErrorReason rpcError = null;
+    final long timeoutMillis;
+    volatile ControllerState state =
+            new ControllerState(false, false, null, null, null);
 
-    public Controller() {}
+    private class ControllerState {
+        final boolean hasFailed;
+        final boolean isCanceled;
+        final Channel.Errors channelError;
+        final SocketRpcProtos.ErrorReason rpcError;
+        final String errorMessage;
 
-    public Controller(Controller other) {
-        copyFrom(other);
+        ControllerState(boolean hasFailed, boolean isCanceled, SocketRpcProtos.ErrorReason rpcError, String errorMessage, Channel.Errors channelError) {
+            this.hasFailed = hasFailed;
+            this.isCanceled = isCanceled;
+            this.rpcError = rpcError;
+            this.errorMessage = errorMessage;
+            this.channelError = channelError;
+        }
     }
 
-    public void copyFrom(Controller other) {
-        errorMessage = other.errorMessage;
-        hasFailed = other.hasFailed;
-        canceled = other.canceled;
-        if (other.cancelNotificationListeners != null) {
-            for (RpcCallback<Object> listener : other.cancelNotificationListeners) {
-                notifyOnCancel(listener);
-            }
-        }
+    public Controller() {
+        timeoutMillis = 0;
+    }
+
+    public Controller(long timeoutMillis) {
+        this.timeoutMillis = timeoutMillis;
     }
 
     public void writeTo(Response.Builder response) {
-        response.setHasFailed(hasFailed);
-        response.setCanceled(canceled);
-        response.setErrorMessage(errorMessage);
+        response.setHasFailed(state.hasFailed);
+        response.setCanceled(state.isCanceled);
+        response.setErrorMessage(state.errorMessage);
     }
 
     public void readFrom(Response response) {
-        hasFailed = response.getHasFailed();
-        canceled = response.getCanceled();
-        errorMessage = response.getErrorMessage();
-        rpcError = response.getErrorCode();
+        state = new ControllerState(response.getHasFailed(),
+                response.getCanceled(), response.getErrorCode(), response.getErrorMessage(), null);
     }
 
     @Override
-    public String errorText() {
-        return errorMessage;
-    }
+    public String errorText() { return state.errorMessage; }
 
-    public Channel.Errors channelError() { return channelError; }
+    public Channel.Errors channelError() { return state.channelError; }
 
-    public SocketRpcProtos.ErrorReason rpcError() { return rpcError; }
+    public SocketRpcProtos.ErrorReason rpcError() { return state.rpcError; }
 
     public boolean isOk() {
-        return !hasFailed && !canceled;
+        return !failed() && !isCanceled();
     }
 
     @Override
-    public boolean failed() { return hasFailed; }
+    public boolean failed() { return state.hasFailed; }
 
     @Override
     public boolean isCanceled() {
-        return canceled;
+        return state.isCanceled;
     }
 
     @Override
-    public void notifyOnCancel(RpcCallback<Object> listener) {
-        if (cancelNotificationListeners == null) {
-            cancelNotificationListeners =
-                    Collections.synchronizedList(
-                            new ArrayList<>());
-        }
-        cancelNotificationListeners.add(listener);
-    }
+    public void notifyOnCancel(RpcCallback<Object> listener) {}
 
     @Override
     public void reset() {
-        copyFrom(new Controller());
+        state = null;
     }
 
     @Override
     public void setFailed(String message) {
-        hasFailed = true;
-        errorMessage = message;
-    }
-
-    public void setFailed(Channel.Errors channelError) {
-        this.channelError = channelError;
-        hasFailed = true;
-    }
-
-    public void cancel() {
-        canceled = true;
-        if (cancelNotificationListeners != null) {
-            for (RpcCallback<Object> listener :
-                    cancelNotificationListeners) {
-                listener.run(null);
-            }
-        }
-    }
-
-    public long getTimeout() {
-        return timeoutMillis;
-    }
-
-    public void setTimeout(long milliseconds) {
-        timeoutMillis = milliseconds;
+        state = new ControllerState(true, false, null, message, null);
     }
 
     @Override
     public void startCancel() {}
+
+    public void startCancel(Channel.Errors channelError) {
+        state = new ControllerState(true, true, null, null, channelError);
+    }
 
     @Override public String toString() {
         return String.format("Controller[ok(%s) canceled(%s) failed(%s) error_text(%s)]",

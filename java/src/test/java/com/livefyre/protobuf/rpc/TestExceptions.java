@@ -8,7 +8,7 @@ public class TestExceptions {
     @Test(expected = Exceptions.TimeoutException.class)
     public void testClientErrors() throws Exception {
         Controller controller = new Controller();
-        controller.setFailed(Channel.Errors.TIMEOUT);
+        controller.startCancel(Channel.Errors.TIMEOUT);
         throw Exceptions.getFrom(controller);
     }
 
