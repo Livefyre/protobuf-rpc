@@ -89,7 +89,7 @@ public class Channel implements RpcChannel {
             ZMQ.poll(items, 10);
             if (items[0].isReadable()) {
                 ZMsg message = ZMsg.recvMsg(socket);
-                ZFrame content = message.pop();
+                ZFrame content = message.getLast();
                 try {
                     final SocketRpcProtos.Response response = SocketRpcProtos.Response.parseFrom(content.getData());
                     responseHandlerPool.execute(() -> handleResponse(response));
@@ -104,7 +104,10 @@ public class Channel implements RpcChannel {
             requestQueue.drainTo(buffer);
             for (SocketRpcProtos.Request request : buffer) {
                 logger.debug("sending request, id -> {}, proto -> {}", request.getId(), request);
-                socket.send(request.toByteArray());
+                ZMsg message = new ZMsg();
+                message.add(new ZFrame(""));
+                message.add(new ZFrame(request.toByteArray()));
+                message.send(socket);
             }
             buffer.clear();
         }

@@ -46,7 +46,7 @@ public class Controller implements RpcController {
     }
 
     public void readFrom(Response response) {
-        state = new ControllerState(response.getHasFailed(),
+        state = new ControllerState(response.getHasFailed() || response.getErrorCode().getNumber() != 0,
                 response.getCanceled(), response.getErrorCode(), response.getErrorMessage(), null);
     }
 
