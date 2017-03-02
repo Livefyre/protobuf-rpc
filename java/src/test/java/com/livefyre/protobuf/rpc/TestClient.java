@@ -139,7 +139,7 @@ public class TestClient {
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
-            Exceptions.getCauseAndThrow(e);
+            throw Exceptions.getCause(e);
         }
     }
 }

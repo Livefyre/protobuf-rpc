@@ -5,7 +5,7 @@ import com.googlecode.protobuf.socketrpc.SocketRpcProtos;
 public class Exceptions {
 
     // base exception
-    static class ProtoRpcException extends Exception {
+    static class ProtoRpcException extends RuntimeException {
         ProtoRpcException(String message) {
             super(message);
         }
@@ -70,7 +70,7 @@ public class Exceptions {
         }
     }
 
-    static ProtoRpcException getFrom(Controller controller) {
+    public static ProtoRpcException getFrom(Controller controller) {
         SocketRpcProtos.ErrorReason error_code = controller.rpcError();
         // client errors
         if (error_code == null) {
@@ -104,39 +104,39 @@ public class Exceptions {
         }
     }
 
-    static void getCauseAndThrow(Exception e) throws Exception {
+    public static ProtoRpcException getCause(Exception e) {
         Throwable t = e.getCause();
         if (t instanceof TimeoutException) {
-            throw (TimeoutException) t;
+            return (TimeoutException) t;
         }
         if (t instanceof ChannelClosedException) {
-            throw (ChannelClosedException) t;
+            return (ChannelClosedException) t;
         }
         if (t instanceof BadResponseProtoError) {
-            throw (BadResponseProtoError) t;
+            return (BadResponseProtoError) t;
         }
         if (t instanceof  InvalidRequestProtoException) {
-            throw (InvalidRequestProtoException) t;
+            return (InvalidRequestProtoException) t;
         }
         if (t instanceof RpcError) {
-            throw (RpcError) t;
+            return (RpcError) t;
         }
         if (t instanceof RpcFailedError) {
-            throw (RpcFailedError) t;
+            return (RpcFailedError) t;
         }
         if (t instanceof BadRequestDataError) {
-            throw (BadRequestDataError) t;
+            return (BadRequestDataError) t;
         }
         if (t instanceof  BadRequestProtoError) {
-            throw (BadRequestProtoError) t;
+            return (BadRequestProtoError) t;
         }
         if (t instanceof ServiceNotFoundError) {
-            throw (ServiceNotFoundError) t;
+            return (ServiceNotFoundError) t;
         }
         if (t instanceof MethodNotFoundError) {
-            throw (MethodNotFoundError) t;
+            return (MethodNotFoundError) t;
         }
-        throw e;
+        return (ProtoRpcException) e;
     }
 
 }
