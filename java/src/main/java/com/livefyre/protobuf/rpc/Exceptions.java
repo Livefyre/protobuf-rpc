@@ -5,67 +5,67 @@ import com.googlecode.protobuf.socketrpc.SocketRpcProtos;
 public class Exceptions {
 
     // base exception
-    static class ProtoRpcException extends RuntimeException {
-        ProtoRpcException(String message) {
+    public static class ProtoRpcException extends RuntimeException {
+        public ProtoRpcException(String message) {
             super(message);
         }
     }
 
     // channel exceptions
-    static class TimeoutException extends ProtoRpcException {
-        TimeoutException(String message) {
+    public static class TimeoutException extends ProtoRpcException {
+        public TimeoutException(String message) {
             super(message);
         }
     }
 
-    static class ChannelClosedException extends ProtoRpcException {
-        ChannelClosedException(String message) {
+    public static class ChannelClosedException extends ProtoRpcException {
+        public ChannelClosedException(String message) {
             super(message);
         }
     }
 
-    static class BadResponseProtoError extends ProtoRpcException {
-        BadResponseProtoError(String message) {
+    public static class BadResponseProtoError extends ProtoRpcException {
+        public BadResponseProtoError(String message) {
             super(message);
         }
     }
 
     // server exceptions
-    static class InvalidRequestProtoException extends ProtoRpcException {
-        InvalidRequestProtoException(String message) { super(message); }
+    public static class InvalidRequestProtoException extends ProtoRpcException {
+        public InvalidRequestProtoException(String message) { super(message); }
     }
-    static class RpcError extends ProtoRpcException {
-        RpcError(String message) {
+    public static class RpcError extends ProtoRpcException {
+        public RpcError(String message) {
             super(message);
         }
     }
 
-    static class RpcFailedError extends ProtoRpcException {
-        RpcFailedError(String message) {
+    public static class RpcFailedError extends ProtoRpcException {
+        public RpcFailedError(String message) {
             super(message);
         }
     }
 
-    static class BadRequestDataError extends ProtoRpcException {
-        BadRequestDataError(String message) {
+    public static class BadRequestDataError extends ProtoRpcException {
+        public BadRequestDataError(String message) {
             super(message);
         }
     }
 
-    static class BadRequestProtoError extends ProtoRpcException {
-        BadRequestProtoError(String message) {
+    public static class BadRequestProtoError extends ProtoRpcException {
+        public BadRequestProtoError(String message) {
             super(message);
         }
     }
 
-    static class ServiceNotFoundError extends ProtoRpcException {
-        ServiceNotFoundError(String message) {
+    public static class ServiceNotFoundError extends ProtoRpcException {
+        public ServiceNotFoundError(String message) {
             super(message);
         }
     }
 
-    static class MethodNotFoundError extends ProtoRpcException {
-        MethodNotFoundError(String message) {
+    public static class MethodNotFoundError extends ProtoRpcException {
+        public MethodNotFoundError(String message) {
             super(message);
         }
     }
