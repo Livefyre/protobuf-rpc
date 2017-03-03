@@ -11,14 +11,14 @@
     <artifactId>protobuf-rpc</artifactId>
     <name>protobuf-rpc</name>
     <!-- Release new maven version via jenkins, ask: @jov or @matt -->
-    <version>1.1.7-SNAPSHOT</version>
+    <version>1.1.7</version>
     <url>https://github.com/Livefyre/protobuf-rpc</url>
 
     <scm>
         <connection>scm:git:git@github.com:Livefyre/protobuf-rpc.git</connection>
         <developerConnection>scm:git:git@github.com:Livefyre/protobuf-rpc.git</developerConnection>
         <url>git@github.com:Livefyre/protobuf-rpc.git</url>
-        <tag>HEAD</tag>
+        <tag>java_v1.1.7</tag>
     </scm>
 
     <properties>
