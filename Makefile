@@ -7,25 +7,31 @@ export PYTHONPATH=$PYTHONPATH:./
 PWD=`pwd`
 ENV = env
 PIP = $(PWD)/env/bin/pip
-PYTHON = exec $(PWD)/env/bin/python
+PYTHON = . env/bin/activate; cd python; python
 JENKINS_NOSE_ARGS = --with-xunit
 DISTRIBUTE = sdist bdist_wheel
 
-all: env pb2_compile
+all: env pb2_compile node/rpc.proto
 
-test: env pb2_compile
-	env/bin/nosetests $(NOSE_ARGS) tests/
+test: test_java test_python
+
+test_java:
+	cd java; mvn test
+
+test_python: env pb2_compile
+	env/bin/nosetests $(NOSE_ARGS) python/tests/
 
 test-jenkins:
-	env/bin/nosetests tests/ $(JENKINS_NOSE_ARGS)
+	env/bin/nosetests python/tests/ $(JENKINS_NOSE_ARGS)
 
 clean:
-	rm -rf build/
-	rm -rf dist/
-	find protobuf_rpc/ -type f -name "*.pyc" -exec rm {} \;
+	git clean -dfx -e *.iml -e .idea
 
 package: all
-	$(PYTHON) setup.py $(DISTRIBUTE)
+	$(PYTHON) setup.py $(DISTRIBUTE) upload -r livefyre
+
+node/rpc.proto:
+	cp protos/rpc.proto node
 
 release: env
 	$(PYTHON) setup.py register -r livefyre
@@ -47,10 +53,10 @@ load-server-http: env
 	$(PYTHON) tests/load_test/http.py
 
 env: env/bin/activate
-env/bin/activate: requirements.txt
+env/bin/activate: python/requirements.txt
 	test -d env || virtualenv --no-site-packages env
-	ln -fs env/bin .
-	. env/bin/activate; pip install -r requirements.txt
+	. env/bin/activate; pip install -r python/requirements.txt
+	. env/bin/activate; pip install -e python/
 	touch env/bin/activate
 
 

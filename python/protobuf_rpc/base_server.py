@@ -29,20 +29,21 @@ class ProtoBufRPCServer(object):
             if method is None:
                 raise MethodNotFoundError("Method %s not found" % (req_obj.method_name))
         except Exception as e:
-            return self.build_error_response(e.message, METHOD_NOT_FOUND)
+            return self.build_error_response(e.message, METHOD_NOT_FOUND, req_obj)
 
         try:
             req_proto = self.parse_inner_request(req_obj, method)
         except Exception as e:
-            return self.build_error_response(e.message, BAD_REQUEST_PROTO)
+            return self.build_error_response(e.message, BAD_REQUEST_PROTO, req_obj)
 
         try:
             response = self.do_request(method, req_proto)
         except NotImplementedError as e:
-            return self.build_error_response(e.message, METHOD_NOT_FOUND)
+            return self.build_error_response(e.message, METHOD_NOT_FOUND, req_obj)
         except Exception as e:
-            return self.build_error_response(e.message, RPC_ERROR)
+            return self.build_error_response(e.message, RPC_ERROR, req_obj)
 
+        response.request_id = req_obj.id
         return response
 
     def parse_outer_request(self, request):
@@ -65,8 +66,10 @@ class ProtoBufRPCServer(object):
         response.response_proto = callback.response.SerializeToString()
         return response
 
-    def build_error_response(self, error_message, error_code=RPC_ERROR):
+    def build_error_response(self, error_message, error_code=RPC_ERROR, req_obj=None):
         response = Response()
+        if req_obj is not None:
+            response.request_id = req_obj.id
         response.error_code = error_code
         error_message = str(error_message)
         response.error_message = error_message

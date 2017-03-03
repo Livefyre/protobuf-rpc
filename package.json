@@ -1,12 +1,12 @@
 {
   "name": "protobuf-rpc",
-  "version": "1.1.2",
+  "version": "1.1.5",
   "description": "rpc implementation for protobuf.js",
   "author": "Matthew Roberson <matt@livefyre.com>",
   "engines": {
     "node": ">= v0.8.0"
   },
-  "main": "./lib/index.js",
+  "main": "./node/index.js",
   "dependencies": {
     "generic-pool": "^2.x",
     "lodash": "^3.7.0",
@@ -24,11 +24,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Livefyre/authz.git"
+    "url": "https://github.com/Livefyre/protobuf-rpc.git"
   },
   "config": {
     "blanket": {
       "pattern": "rpc/nodejs/src"
     }
+  },
+  "scripts": {
+    "test": "echo 'no node tests'"
   }
 }
