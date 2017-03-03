@@ -1,6 +1,6 @@
 {
   "name": "protobuf-rpc",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "rpc implementation for protobuf.js",
   "author": "Matthew Roberson <matt@livefyre.com>",
   "engines": {

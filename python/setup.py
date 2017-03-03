@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name="protobuf_rpc",
-    version="1.1.6",
+    version="1.1.7",
     author="Tim Cherry",
     author_email="timcherry21@gmail.com",
     description=("Gevent+ZMQ RPC Implementation for Google Protobufs."),
