@@ -32,6 +32,7 @@
     }
   },
   "scripts": {
-    "test": "echo 'no node tests'"
+    "test": "echo 'no node tests'",
+    "postversion": "cd ..; make node/rpc.proto"
   }
 }
