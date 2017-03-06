@@ -33,6 +33,6 @@
   },
   "scripts": {
     "test": "echo 'no node tests'",
-    "postversion": "git push && git push --tags && cd ..; make node/rpc.proto"
+    "postversion": "false && git push && git push --tags && cd ..; make node/rpc.proto"
   }
 }
