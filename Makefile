@@ -11,7 +11,7 @@ PYTHON = . env/bin/activate; cd python; python
 JENKINS_NOSE_ARGS = --with-xunit
 DISTRIBUTE = sdist bdist_wheel
 
-all: env pb2_compile node/rpc.proto
+all: env pb2_compile
 
 test: test_java test_python
 

@@ -1,6 +1,6 @@
 {
   "name": "protobuf-rpc",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "rpc implementation for protobuf.js",
   "author": "Matthew Roberson <matt@livefyre.com>",
   "engines": {
@@ -32,6 +32,7 @@
     }
   },
   "scripts": {
-    "test": "echo 'no node tests'"
+    "test": "echo 'no node tests'",
+    "postversion": "cd ..; make node/rpc.proto"
   }
 }
