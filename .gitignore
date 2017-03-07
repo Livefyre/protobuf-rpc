@@ -17,3 +17,7 @@ nosetests.xml
 java/src/main/resources/*.proto
 *.egg-info/
 node/rpc.proto
+
+java/target
+python/build
+python/dist
