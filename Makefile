@@ -59,4 +59,6 @@ env/bin/activate: python/requirements.txt
 	. env/bin/activate; pip install -e python/
 	touch env/bin/activate
 
-
+npm-version-subdirectory-patch: node/package.json
+	$(eval NODE_PACKAGE_VERSION := $(shell node -e "console.log(require('./node/package.json').version);"))
+	git add node/package.json && git commit -m $(NODE_PACKAGE_VERSION) && git tag v$(NODE_PACKAGE_VERSION) && git push && git push --tags
