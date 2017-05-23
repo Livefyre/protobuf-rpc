@@ -50,12 +50,14 @@ public class Channel implements RpcChannel {
         final Controller controller;
         final RpcCallback<Message> done;
         final Message responsePrototype;
+        final TimerTask timerTask;
 
-        RequestMetadata(long id, Controller controller, RpcCallback<Message> done, Message responsePrototype) {
+        RequestMetadata(long id, Controller controller, RpcCallback<Message> done, Message responsePrototype, TimerTask timerTask) {
             this.id = id;
             this.controller = controller;
             this.done = done;
             this.responsePrototype = responsePrototype;
+            this.timerTask = timerTask;
         }
     }
 
@@ -153,10 +155,19 @@ public class Channel implements RpcChannel {
         timer.cancel();
     }
 
-    private void addTimeoutHandler(RequestMetadata request) {
-        long timeout = request.controller.timeoutMillis;
-        if (timeout > 0) {
-            timer.schedule(new CancelRequestTask(request.id), timeout);
+    private TimerTask createTimerTask(long id, Controller controller) {
+        long timeout = controller.timeoutMillis;
+        if (timeout == 0) {
+            return null;
+        }
+        TimerTask task = new CancelRequestTask(id);
+        timer.schedule(task, timeout);
+        return task;
+    }
+
+    private void cancelTimerTask(RequestMetadata request) {
+        if (request.timerTask != null) {
+            request.timerTask.cancel();
         }
     }
 
@@ -168,12 +179,12 @@ public class Channel implements RpcChannel {
                            RpcCallback<Message> done) {
         long id = nextId.incrementAndGet();
         Controller controller_ = (Controller) controller;
-        RequestMetadata request_ = new RequestMetadata(id, controller_, done, responsePrototype);
+        RequestMetadata request_ = new RequestMetadata(id, controller_, done, responsePrototype, createTimerTask(id, controller_));
         if (isClosed) {
+            cancelTimerTask(request_);
             cancelRequest(request_, Errors.CHANNEL_CLOSED);
             return;
         }
-        addTimeoutHandler(request_);
         ongoingRequests.put(id, request_);
 
         logger.debug("queueing request, id -> {}, proto -> {}", id, requestMessage);
@@ -211,6 +222,7 @@ public class Channel implements RpcChannel {
             logger.warn("unknown response, proto -> {}", response);
             return;
         }
+        cancelTimerTask(request);
         try {
             Message responsePb = null;
             if (response.hasResponseProto()) {
