@@ -39,6 +39,21 @@ message Request {
   required bytes request_proto = 3;
 
   optional uint64 id = 4;
+
+  optional int64 timestamp = 5;
+
+  optional string hostname = 6;
+
+  optional string procname = 7;
+
+  optional int32 pid = 8;
+
+  optional string user_id = 9;
+
+  optional string referrer = 10;
+
+  optional string origin_ip_address = 11;
+
 }
 
 message Response {
