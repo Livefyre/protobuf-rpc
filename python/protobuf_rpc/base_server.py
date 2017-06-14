@@ -37,7 +37,7 @@ class ProtoBufRPCServer(object):
             return self.build_error_response(e.message, BAD_REQUEST_PROTO, req_obj)
 
         try:
-            response = self.do_request(method, req_proto)
+            response = self.do_request(method, req_proto, req_obj)
         except NotImplementedError as e:
             return self.build_error_response(e.message, METHOD_NOT_FOUND, req_obj)
         except Exception as e:
@@ -58,8 +58,8 @@ class ProtoBufRPCServer(object):
         return deserialize_string(request.request_proto,
                                   self.service.GetRequestClass(method))
 
-    def do_request(self, method, proto_request):
-        controller = SocketRpcController()
+    def do_request(self, method, proto_request, req_obj):
+        controller = SocketRpcController(req_obj.headers)
         callback = Callback()
         self.service.CallMethod(method, controller, proto_request, callback)
         response = Response()

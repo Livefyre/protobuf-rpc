@@ -12,7 +12,7 @@ import socket
 class ProtoBufRPCChannel(RpcChannel):
 
     def CallMethod(self, method, controller, request, response_class, done_callback):
-        rpc_request = self.create_rpc_request(method, request)
+        rpc_request = self.create_rpc_request(method, request, controller)
         response = self.send_rpc_request(rpc_request)
         resp_obj = deserialize_string(response, Response)
         self.check_for_errors(resp_obj)
@@ -31,18 +31,17 @@ class ProtoBufRPCChannel(RpcChannel):
         error_message = getattr(resp_obj, "error_message", "RPC Error")
         raise error_class(error_message)
 
-    def create_rpc_request(self, method, request):
+    def create_rpc_request(self, method, request, controller):
         rpcRequest = Request()
+        if controller.headers:
+            rpcRequest.headers.CopyFrom(controller.headers)
         rpcRequest.request_proto = request.SerializeToString()
         rpcRequest.service_name = method.containing_service.full_name
         rpcRequest.method_name = method.name
-        rpcRequest.timestamp = int(round(time.time() * 1000))
-        rpcRequest.hostname = socket.gethostname()
+        rpcRequest.headers.timestamp = int(round(time.time() * 1000))
+        rpcRequest.headers.hostname = socket.gethostname()
         pid = os.getpid()
-        process_name = psutil.Process(pid).name()
-        rpcRequest.procname = process_name
-        rpcRequest.pid = os.getpid()
-        rpcRequest.user_id = request.user_id
-        rpcRequest.referrer = request.referrer
-        rpcRequest.origin_ip_address = request.origin_ip_address
+        process_name = psutil.Process(pid)
+        rpcRequest.headers.procname = process_name
+        rpcRequest.headers.pid = os.getpid()
         return rpcRequest

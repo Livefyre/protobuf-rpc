@@ -40,6 +40,11 @@ message Request {
 
   optional uint64 id = 4;
 
+  optional RequestHeaders headers = 5;
+}
+
+message RequestHeaders {
+
   optional int64 timestamp = 5;
 
   optional string hostname = 6;
