@@ -7,7 +7,7 @@ class SocketRpcController(RpcController):
     The RpcController is used to mediate a single method call.
     '''
 
-    def __init__(self, headers):
+    def __init__(self, headers=None):
         '''Constructor which initializes the controller's state.'''
         self._fail = False
         self._error = None
