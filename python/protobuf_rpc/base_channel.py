@@ -41,7 +41,7 @@ class ProtoBufRPCChannel(RpcChannel):
         rpcRequest.headers.timestamp = int(round(time.time() * 1000))
         rpcRequest.headers.hostname = socket.gethostname()
         pid = os.getpid()
-        process_name = psutil.Process(pid)
+        process_name = psutil.Process(pid).name()
         rpcRequest.headers.procname = process_name
         rpcRequest.headers.pid = os.getpid()
         return rpcRequest
