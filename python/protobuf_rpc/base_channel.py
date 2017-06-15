@@ -1,12 +1,12 @@
-import os
 
-import psutil
 from google.protobuf.service import RpcChannel
 from protobuf_rpc.error import ERROR_CODE_TO_ERROR_CLASS, NO_ERROR, ProtobufError
 from protobuf_rpc.protos.rpc_pb2 import Request, Response
 from protobuf_rpc.util import deserialize_string
 import time
-import socket
+from . import __hostname__ as hostname
+from . import __pid__ as pid
+from . import __procname__ as procname
 
 
 class ProtoBufRPCChannel(RpcChannel):
@@ -39,9 +39,7 @@ class ProtoBufRPCChannel(RpcChannel):
         rpcRequest.service_name = method.containing_service.full_name
         rpcRequest.method_name = method.name
         rpcRequest.headers.timestamp = int(round(time.time() * 1000))
-        rpcRequest.headers.hostname = socket.gethostname()
-        pid = os.getpid()
-        process_name = psutil.Process(pid).name()
-        rpcRequest.headers.procname = process_name
-        rpcRequest.headers.pid = os.getpid()
+        rpcRequest.headers.hostname = hostname
+        rpcRequest.headers.procname = procname
+        rpcRequest.headers.pid = pid
         return rpcRequest
