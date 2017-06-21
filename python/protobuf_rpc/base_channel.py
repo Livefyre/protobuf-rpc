@@ -38,7 +38,7 @@ class ProtoBufRPCChannel(RpcChannel):
         rpcRequest.request_proto = request.SerializeToString()
         rpcRequest.service_name = method.containing_service.full_name
         rpcRequest.method_name = method.name
-        rpcRequest.headers.timestamp = int(round(time.time() * 1000))
+        rpcRequest.headers.timestamp = int(time.time() * 1000)
         rpcRequest.headers.hostname = hostname
         rpcRequest.headers.procname = procname
         rpcRequest.headers.pid = pid

@@ -45,19 +45,19 @@ message Request {
 
 message RequestHeaders {
 
-  optional int64 timestamp = 5;
+  optional uint64 timestamp = 1;
 
-  optional string hostname = 6;
+  optional string hostname = 2;
 
-  optional string procname = 7;
+  optional string procname = 3;
 
-  optional int32 pid = 8;
+  optional uint32 pid = 4;
 
-  optional string user_id = 9;
+  optional string user_id = 5;
 
-  optional string referrer = 10;
+  optional string referrer = 6;
 
-  optional string origin_ip_address = 11;
+  optional string origin_ip_address = 7;
 
 }
 
