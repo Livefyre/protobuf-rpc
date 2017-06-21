@@ -4,9 +4,13 @@ from protobuf_rpc.error import ERROR_CODE_TO_ERROR_CLASS, NO_ERROR, ProtobufErro
 from protobuf_rpc.protos.rpc_pb2 import Request, Response
 from protobuf_rpc.util import deserialize_string
 import time
-from . import __hostname__ as hostname
-from . import __pid__ as pid
-from . import __procname__ as procname
+import socket
+import os
+import psutil
+
+procname = socket.gethostname()
+pid = os.getpid()
+hostname = psutil.Process(pid).name()
 
 
 class ProtoBufRPCChannel(RpcChannel):
