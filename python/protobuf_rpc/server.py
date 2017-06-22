@@ -7,8 +7,7 @@ import zmq.green as zmq
 
 
 class GServer(ProtoBufRPCServer):
-    def __init__(self, host, port, service, logging_format, poolsize=128):
-        super(GServer, self).__init__(logging_format)
+    def __init__(self, host, port, service, poolsize=128):
         self.gpool = Pool(poolsize)
         self.stop_event = Event()
         context = zmq.Context()

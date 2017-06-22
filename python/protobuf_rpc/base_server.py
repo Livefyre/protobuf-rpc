@@ -24,11 +24,11 @@ class Callback(object):
 
 LOG_FORMAT = ''
 access_log = getLogger('protobuf_rpc.access')
+logging_format = "'%(method)s' - '%(request)s' - '%(latency)s' - '%(status_code)s'"
+error_logging_format = "'%(error)s'"
 
 
 class ProtoBufRPCServer(object):
-    def __init__(self, log_format=LOG_FORMAT):
-        self.log_format = log_format
 
     def handle(self, request):
         start = time.time()
@@ -39,35 +39,36 @@ class ProtoBufRPCServer(object):
         try:
             logging_params = {'method': req_obj.method_name, 'request': json.dumps(protobuf_to_dict(req_obj))}
         except Exception as e:
-            access_log.exception("Error writing to logging params")
+            error_logging_params = {'error': "Error writing to logging params"}
+            access_log.exception(error_logging_format % error_logging_params)
 
         try:
             method = self.get_method(req_obj.method_name)
             if method is None:
                 raise MethodNotFoundError("Method %s not found" % (req_obj.method_name))
         except Exception as e:
-            logging_params['latency'] = time.time() - start;
+            logging_params['latency'] = time.time() - start
             return self.build_error_response(e.message, METHOD_NOT_FOUND, req_obj, logging_params)
 
         try:
             req_proto = self.parse_inner_request(req_obj, method)
         except Exception as e:
-            logging_params['latency'] = time.time() - start;
+            logging_params['latency'] = time.time() - start
             return self.build_error_response(e.message, BAD_REQUEST_PROTO, req_obj, logging_params)
 
         try:
             response = self.do_request(method, req_proto)
         except NotImplementedError as e:
-            logging_params['latency'] = time.time() - start;
+            logging_params['latency'] = time.time() - start
             return self.build_error_response(e.message, METHOD_NOT_FOUND, req_obj, logging_params)
         except Exception as e:
-            logging_params['latency'] = time.time() - start;
+            logging_params['latency'] = time.time() - start
             return self.build_error_response(e.message, RPC_ERROR, req_obj, logging_params)
 
         response.request_id = req_obj.id
-        logging_params['latency'] = time.time() - start;
+        logging_params['latency'] = time.time() - start
         logging_params['status_code'] = 200
-        access_log.info(self.log_format % logging_params)
+        access_log.info(logging_format % logging_params)
         return response
 
     def parse_outer_request(self, request):
@@ -92,7 +93,7 @@ class ProtoBufRPCServer(object):
 
     def build_error_response(self, error_message, error_code=RPC_ERROR, req_obj=None, logging_params=None):
         logging_params['status_code'] = 500
-        access_log.info(self.log_format % logging_params)
+        access_log.info(logging_format % logging_params)
         response = Response()
         if req_obj is not None:
             response.request_id = req_obj.id
