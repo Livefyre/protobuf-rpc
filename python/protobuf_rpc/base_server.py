@@ -92,8 +92,9 @@ class ProtoBufRPCServer(object):
         return response
 
     def build_error_response(self, error_message, error_code=RPC_ERROR, req_obj=None, logging_params=None):
-        logging_params['status_code'] = 500
-        access_log.info(logging_format % logging_params)
+        if logging_params is not None:
+            logging_params['status_code'] = 500
+            access_log.info(logging_format % logging_params)
         response = Response()
         if req_obj is not None:
             response.request_id = req_obj.id
