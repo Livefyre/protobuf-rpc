@@ -14,10 +14,13 @@ function rpcImpl(channel) {
   return function(method, request, callback) {
     var serviceAndMethodNames = extractServiceAndMethodNames(method);
 
+    var headers = request.__headers;
+    delete request.__headers;
     var request = new root.protobuf.socketrpc.Request({
       service_name: serviceAndMethodNames.serviceName,
       method_name: serviceAndMethodNames.methodName,
-      request_proto: request.encode().toBuffer()
+      request_proto: request.encode().toBuffer(),
+      headers: headers
     });
 
     function cb(error, response) {

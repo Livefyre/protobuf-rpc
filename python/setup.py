@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name="protobuf_rpc",
-    version="1.1.7",
+    version="1.2.0",
     author="Tim Cherry",
     author_email="timcherry21@gmail.com",
     description=("Gevent+ZMQ RPC Implementation for Google Protobufs."),
@@ -19,7 +19,9 @@ setup(
     long_description="",
     install_requires=["protobuf>=2.5.0",
                       "gevent>=1.0",
-                      "pyzmq>=14.3.0"],
+                      "pyzmq>=14.3.0",
+                      "psutil>=5.0",
+                      "protobuf-to-dict>=0.1.0"],
     setup_requires=[], # use the requirements.txt file
     test_suite='nose.collector',
     classifiers=[],
