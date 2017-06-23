@@ -21,14 +21,12 @@ class Callback(object):
         self.response = response
         self.invoked = True
 
-
-LOG_FORMAT = ''
 access_log = getLogger('protobuf_rpc.access')
 error_log = getLogger('protobuf_rpc.error')
-logging_format = "'%(method)s' - '%(request)s' - '%(latency)s' - '%(status_code)s'"
 
 
 class ProtoBufRPCServer(object):
+    logging_format = "'%(method)s' - '%(request)s' - '%(latency)s' - '%(status_code)s'"
 
     def handle(self, request):
         start = time.time()
@@ -65,7 +63,7 @@ class ProtoBufRPCServer(object):
         response.request_id = req_obj.id
         logging_params['latency'] = time.time() - start
         logging_params['status_code'] = 200
-        access_log.info(logging_format % logging_params)
+        access_log.info(self.logging_format % logging_params)
         return response
 
     def parse_outer_request(self, request):
@@ -91,7 +89,7 @@ class ProtoBufRPCServer(object):
     def build_error_response(self, error_message, error_code=RPC_ERROR, req_obj=None, logging_params=None):
         if logging_params is not None:
             logging_params['status_code'] = 500
-            access_log.info(logging_format % logging_params)
+            access_log.info(self.logging_format % logging_params)
         response = Response()
         if req_obj is not None:
             response.request_id = req_obj.id
