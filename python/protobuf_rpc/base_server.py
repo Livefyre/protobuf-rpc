@@ -24,8 +24,8 @@ class Callback(object):
 
 LOG_FORMAT = ''
 access_log = getLogger('protobuf_rpc.access')
+error_log = getLogger('protobuf_rpc.error')
 logging_format = "'%(method)s' - '%(request)s' - '%(latency)s' - '%(status_code)s'"
-error_logging_format = "'%(error)s'"
 
 
 class ProtoBufRPCServer(object):
@@ -36,11 +36,8 @@ class ProtoBufRPCServer(object):
             req_obj = self.parse_outer_request(request)
         except Exception as e:
             return self.build_error_response(e.message, INVALID_REQUEST_PROTO)
-        try:
-            logging_params = {'method': req_obj.method_name, 'request': json.dumps(protobuf_to_dict(req_obj))}
-        except Exception as e:
-            error_logging_params = {'error': "Error writing to logging params"}
-            access_log.exception(error_logging_format % error_logging_params)
+
+        logging_params = {'method': req_obj.method_name, 'request': json.dumps(protobuf_to_dict(req_obj))}
 
         try:
             method = self.get_method(req_obj.method_name)
