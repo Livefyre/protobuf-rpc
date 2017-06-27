@@ -20,8 +20,10 @@ function rpcImpl(channel) {
       service_name: serviceAndMethodNames.serviceName,
       method_name: serviceAndMethodNames.methodName,
       request_proto: request.encode().toBuffer(),
-      headers: headers
     });
+    if (headers) {
+        request.set('headers', headers);
+    }
 
     function cb(error, response) {
       if (error) {
